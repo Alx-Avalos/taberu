@@ -167,4 +167,3 @@ const HERO_COLORS = {
   transport:"linear-gradient(135deg,#7A88F7,#4338CA)", etiquette:"linear-gradient(135deg,#7A88F7,#4338CA)",
   timing:"linear-gradient(135deg,#7A88F7,#4338CA)", default:"linear-gradient(135deg,#7A88F7,#4338CA)",
 };
-const CITY_FALLBACK = "linear-gradient(135deg,#4F46E5,#7A5AF8)";
