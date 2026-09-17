@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Japan Field Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=M+PLUS+Rounded+1c:wght@400;500;700&display=swap" rel="stylesheet" />
+<link href="https://cdn.quilljs.com/1.3.6/quill.bubble.css" rel="stylesheet" />
+<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+<style>
+  html, body { margin:0; padding:0; }
+  #root { min-height:100vh; }
+  .app *, .app *::before, .app *::after { box-sizing:border-box; margin:0; padding:0; }
+  .app {
+    --gray-50:#F9FAFB; --gray-100:#F2F4F7; --gray-300:#D0D5DD; --gray-400:#98A2B3;
+    --gray-500:#667085; --gray-700:#344054; --gray-900:#101828;
+    --brand-25:#F5F8FF; --brand-50:#EEF4FF; --brand-600:#4F46E5; --brand-700:#4338CA;
+    --green-50:#ECFDF3; --green-700:#085D3A; --red-500:#F04438; --red-50:#FEF3F2;
+    --bg-main:#fff; --surface:#fff; --border:#EDEDED;
+    --card-radius:12px; --card-shadow:0px 1px 3px rgba(0,0,0,0.06),0px 1px 2px rgba(0,0,0,0.04);
+    --ink:var(--gray-900); --ink2:var(--gray-700); --ink3:var(--gray-500);
+    --accent:var(--brand-600);
+    --sans:'Inter',-apple-system,BlinkMacSystemFont,sans-serif; --jp:'M PLUS Rounded 1c',sans-serif;
+    --radius:8px; --transition:0.14s ease;
+    font-family:var(--sans); background:var(--bg-main); color:var(--ink);
+    -webkit-font-smoothing:antialiased; font-size:14px; line-height:1.5; min-height:100vh;
+  }
+
+  /* ---------- shared shell ---------- */
+  .topbar { display:flex; align-items:center; justify-content:space-between; height:56px; padding:0 32px; border-bottom:1px solid var(--border); position:sticky; top:0; background:rgba(255,255,255,0.85); backdrop-filter:blur(8px); z-index:30; }
+  .brand { display:flex; align-items:center; gap:10px; cursor:pointer; border:none; background:none; font-family:var(--sans); }
+  .brand-jp { font-family:var(--jp); font-size:20px; font-weight:700; color:var(--accent); line-height:1; }
+  .brand-name { font-size:15px; font-weight:700; color:var(--ink); letter-spacing:-0.2px; }
+  .topbar-back { font-size:13px; font-weight:600; color:var(--ink3); background:none; border:none; cursor:pointer; font-family:var(--sans); padding:8px 10px; border-radius:var(--radius); transition:all var(--transition); }
+  .topbar-back:hover { color:var(--ink); background:var(--gray-50); }
+  .topbar-right { display:flex; align-items:center; gap:14px; }
+  .topbar-saved { font-size:12px; font-weight:600; color:var(--green-700); opacity:0; transition:opacity 0.25s; }
+  .topbar-saved.show { opacity:1; }
+  .topbar-delete { font-size:12px; font-weight:600; color:var(--gray-400); background:none; border:none; cursor:pointer; font-family:var(--sans); padding:8px 10px; border-radius:var(--radius); transition:color var(--transition); }
+  .topbar-delete:hover { color:var(--red-500); }
+
+  /* ---------- home ---------- */
+  .home { max-width:1200px; margin:0 auto; padding:56px 32px 96px; }
+  .home-hero { margin-bottom:48px; }
+  .home-eyebrow { font-family:var(--jp); font-size:14px; color:var(--accent); letter-spacing:3px; margin-bottom:14px; }
+  .home-title { font-size:44px; font-weight:700; letter-spacing:-1px; line-height:1.08; margin-bottom:14px; }
+  .home-sub { font-size:17px; color:var(--ink3); line-height:1.5; max-width:56ch; }
+  .home-meta { display:flex; gap:28px; margin-top:24px; }
+  .home-stat-num { font-size:22px; font-weight:700; color:var(--ink); }
+  .home-stat-label { font-size:12px; color:var(--ink3); margin-top:2px; }
+
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:22px; }
+  .dcard { border-radius:16px; border:1px solid var(--border); overflow:hidden; cursor:pointer; background:var(--surface); display:flex; flex-direction:column; transition:box-shadow var(--transition), transform var(--transition); }
+  .dcard:hover { box-shadow:0 8px 24px rgba(16,24,40,0.08); transform:translateY(-2px); }
+  .dcard-cover { height:150px; background-size:cover; background-position:center; position:relative; }
+  .dcard-cover-fallback { height:150px; display:flex; align-items:flex-end; padding:16px; }
+  .dcard-cover-fallback .dcard-kana { font-family:var(--jp); font-size:48px; font-weight:700; color:#fff; line-height:0.9; opacity:0.92; }
+  .dcard-body { padding:18px 20px 20px; display:flex; flex-direction:column; flex:1; }
+  .dcard-name { font-size:19px; font-weight:700; letter-spacing:-0.3px; }
+  .dcard-dates { font-size:12px; color:var(--ink3); margin-top:3px; }
+  .dcard-desc { font-size:13.5px; color:var(--ink2); line-height:1.55; margin-top:12px; flex:1; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+  .dcard-count { font-size:12px; font-weight:600; color:var(--accent); margin-top:16px; }
+  .dcard-new { border:1.5px dashed var(--border); align-items:center; justify-content:center; min-height:210px; color:var(--ink3); font-size:14px; font-weight:600; box-shadow:none; }
+  .dcard-new:hover { border-color:var(--accent); color:var(--accent); background:var(--brand-25); transform:none; box-shadow:none; }
+
+  /* ---------- city page ---------- */
+  .city { }
+  .city-body { max-width:1200px; margin:0 auto; padding:0 32px 96px; }
+  .city-head { padding:32px 0 8px; max-width:70ch; }
+  .city-name { font-size:34px; font-weight:700; letter-spacing:-0.6px; line-height:1.15; }
+  .city-name-jp { font-family:var(--jp); font-size:14px; color:var(--ink3); letter-spacing:2px; margin-top:6px; }
+  .city-dates { font-size:13px; color:var(--ink3); margin-top:8px; }
+  .city-blurb { font-size:16px; color:var(--ink2); line-height:1.6; margin-top:14px; }
+  .stays { display:flex; flex-wrap:wrap; gap:12px; margin:24px 0 8px; }
+  .stay { flex:1; min-width:260px; border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:var(--radius); padding:13px 16px; display:flex; justify-content:space-between; align-items:center; gap:12px; }
+  .stay-hotel { font-size:14px; font-weight:600; }
+  .stay-dates { font-size:12px; color:var(--ink3); margin-top:2px; }
+  .stay-link { font-size:12px; font-weight:600; color:var(--accent); text-decoration:none; white-space:nowrap; }
+  .tabs { display:flex; gap:4px; flex-wrap:wrap; border-bottom:1px solid var(--border); margin:22px 0 26px; position:sticky; top:56px; background:rgba(255,255,255,0.9); backdrop-filter:blur(8px); z-index:20; padding-top:4px; }
+  .tab { padding:10px 14px; font-size:14px; font-weight:500; cursor:pointer; border:none; background:none; font-family:var(--sans); color:var(--ink3); border-bottom:2px solid transparent; margin-bottom:-1px; transition:all var(--transition); }
+  .tab:hover { color:var(--ink); }
+  .tab.active { color:var(--accent); border-bottom-color:var(--accent); font-weight:600; }
+
+  /* ---------- place cards ---------- */
+  .places { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:20px; }
+  .pcard { border-radius:14px; border:1px solid var(--border); overflow:hidden; cursor:pointer; background:var(--surface); transition:box-shadow var(--transition), transform var(--transition); }
+  .pcard:hover { box-shadow:0 8px 24px rgba(16,24,40,0.08); transform:translateY(-2px); }
+  .pcard-cover { height:150px; background-size:cover; background-position:center; }
+  .pcard-body { padding:16px 18px 18px; }
+  .pcard-top { display:flex; align-items:center; gap:8px; margin-bottom:9px; }
+  .pcard-title { font-size:16px; font-weight:700; letter-spacing:-0.2px; line-height:1.3; margin-right:auto; }
+  .pcard-price { font-size:12px; font-weight:600; color:var(--gray-500); }
+  .pcard-cat { font-size:10px; font-weight:700; letter-spacing:0.04em; text-transform:uppercase; padding:3px 8px; border-radius:20px; }
+  .pcard-note { font-size:13.5px; color:var(--ink2); line-height:1.6; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+  .cat-food{background:#FFF6ED;color:#B54708}.cat-coffee{background:#F5F0EB;color:#7A5230}
+  .cat-craft{background:var(--green-50);color:var(--green-700)}.cat-offbeat{background:#F4F3FF;color:#5925DC}
+  .cat-daytrip{background:#EFF8FF;color:#175CD3}
+  .cat-money,.cat-transport,.cat-etiquette,.cat-timing{background:var(--brand-25);color:var(--brand-700)}
+  .add-place { border:1.5px dashed var(--border); border-radius:14px; background:none; color:var(--ink3); font-size:14px; font-weight:600; cursor:pointer; font-family:var(--sans); min-height:150px; display:flex; align-items:center; justify-content:center; transition:all var(--transition); }
+  .add-place:hover { border-color:var(--accent); color:var(--accent); background:var(--brand-25); }
+
+  /* ---------- item detail: two column ---------- */
+  .detail-body { max-width:1120px; margin:0 auto; padding:36px 32px 96px; display:grid; grid-template-columns:1fr 340px; gap:52px; align-items:start; }
+  .detail-main { min-width:0; }
+  .detail-cat { font-size:11px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--gray-400); }
+  .detail-title { font-size:34px; font-weight:700; letter-spacing:-0.5px; line-height:1.15; margin:8px 0 22px; }
+  .detail-title:empty:before { content:"Untitled"; color:var(--gray-300); }
+  .detail-notes .ql-editor { font-family:var(--sans); font-size:16px; line-height:1.8; color:var(--ink2); padding:0; min-height:200px; max-width:65ch; }
+  .detail-notes .ql-editor.ql-blank::before { color:var(--gray-300); font-style:normal; left:0; font-size:16px; }
+  .detail-notes .ql-editor img { max-width:100%; border-radius:10px; margin:14px 0; }
+  .notes-drop.dragover .ql-editor { background:var(--brand-25); border-radius:10px; }
+  .notes-hint { font-size:11px; color:var(--gray-300); margin-top:14px; }
+
+  .rail { position:sticky; top:80px; display:flex; flex-direction:column; gap:2px; border:1px solid var(--border); border-radius:14px; padding:6px 20px 20px; }
+  .rail-row { padding:16px 0; border-bottom:1px solid var(--border); }
+  .rail-row:last-child { border-bottom:none; }
+  .rail-label { font-size:11px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink3); margin-bottom:7px; }
+  .rail-val { font-size:14px; color:var(--ink2); line-height:1.55; }
+  .rail-maps { display:inline-block; margin-top:10px; font-size:13px; font-weight:600; color:var(--accent); text-decoration:none; }
+  .rail-maps:hover { text-decoration:underline; }
+  .rail-tip { background:var(--brand-25); border-radius:10px; padding:14px 16px; margin-top:16px; }
+  .rail-tip .rail-label { color:var(--brand-700); }
+  .rail-tip-text { font-size:13.5px; color:var(--ink2); line-height:1.6; }
+
+  /* ---------- editable ---------- */
+  .editable { outline:none; border-radius:4px; transition:background var(--transition); cursor:text; }
+  .editable:hover { background:var(--gray-50); }
+  .editable:focus { background:var(--brand-25); box-shadow:0 0 0 3px var(--brand-25); }
+  .editable:empty:before { content:attr(data-placeholder); color:var(--gray-300); }
+
+  /* ---------- cover (drag reposition + drop replace) ---------- */
+  .cover { height:280px; background-size:cover; background-position:center; position:relative; cursor:grab; user-select:none; touch-action:none; }
+  .cover.dragging { cursor:grabbing; }
+  .cover-controls { position:absolute; top:16px; right:24px; opacity:0; transition:opacity var(--transition); }
+  .cover:hover .cover-controls { opacity:1; }
+  .cover-btn { background:rgba(255,255,255,0.92); border-radius:20px; padding:7px 14px; font-size:12px; font-weight:600; color:var(--ink); cursor:pointer; box-shadow:0 1px 4px rgba(0,0,0,0.15); }
+  .cover-btn input { display:none; }
+  .cover-hint { position:absolute; bottom:14px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.5); color:#fff; font-size:11px; padding:4px 12px; border-radius:12px; opacity:0; transition:opacity var(--transition); pointer-events:none; white-space:nowrap; }
+  .cover:hover .cover-hint, .cover.dragging .cover-hint { opacity:1; }
+  .cover-empty { margin:0 auto; max-width:1120px; }
+  .cover-empty-inner { margin:20px 32px 0; height:88px; border:1.5px dashed var(--border); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:600; color:var(--gray-400); cursor:pointer; transition:all var(--transition); }
+  .cover-empty-inner.dragover { border-color:var(--accent); color:var(--accent); background:var(--brand-25); }
+  .cover-empty-inner input { display:none; }
+
+  /* ---------- add forms ---------- */
+  .form { border:1px solid var(--border); border-radius:14px; padding:18px 20px; display:flex; flex-direction:column; gap:10px; background:var(--surface); }
+  .form input, .form textarea, .form select { font-family:var(--sans); font-size:13px; padding:9px 11px; border:1px solid var(--border); border-radius:var(--radius); outline:none; color:var(--ink); resize:vertical; }
+  .form input:focus, .form textarea:focus, .form select:focus { border-color:var(--accent); }
+  .form-row { display:flex; gap:8px; justify-content:flex-end; margin-top:4px; }
+  .btn-ghost { background:none; border:1px solid var(--border); border-radius:var(--radius); padding:8px 15px; font-size:12px; font-weight:600; color:var(--ink3); cursor:pointer; font-family:var(--sans); }
+  .btn-primary { background:var(--accent); border:none; border-radius:var(--radius); padding:8px 15px; font-size:12px; font-weight:600; color:#fff; cursor:pointer; font-family:var(--sans); }
+  .btn-primary:hover { background:var(--brand-700); }
+
+  @media (max-width:860px){
+    .topbar { padding:0 18px; }
+    .home { padding:36px 18px 64px; }
+    .home-title { font-size:32px; }
+    .city-body { padding:0 18px 64px; }
+    .detail-body { grid-template-columns:1fr; gap:28px; padding:24px 18px 64px; }
+    .rail { position:static; }
+    .cover { height:200px; }
+    .cover-empty-inner { margin:16px 18px 0; }
+    .tabs { top:56px; }
+  }
+  /* ---------- item modal (desktop) + bottom sheet (mobile) ---------- */
+  .modal-backdrop { position:fixed; inset:0; background:rgba(16,24,40,0.45); z-index:100; display:flex; align-items:flex-start; justify-content:center; padding:48px 24px; overflow-y:auto; animation:fade 0.15s ease; }
+  @keyframes fade { from{opacity:0} to{opacity:1} }
+  .modal { background:var(--surface); border-radius:18px; width:100%; max-width:900px; box-shadow:0 24px 64px rgba(16,24,40,0.28); overflow:hidden; position:relative; animation:pop 0.18s ease; }
+  @keyframes pop { from{transform:translateY(8px);opacity:0} to{transform:translateY(0);opacity:1} }
+  .modal-close { position:absolute; top:16px; right:16px; z-index:5; width:34px; height:34px; border-radius:50%; background:rgba(255,255,255,0.92); border:none; cursor:pointer; font-size:16px; color:var(--ink2); display:flex; align-items:center; justify-content:center; box-shadow:0 1px 6px rgba(0,0,0,0.14); }
+  .modal-close:hover { background:#fff; color:var(--ink); }
+  .modal-del { position:absolute; top:16px; left:16px; z-index:5; font-size:12px; font-weight:600; color:#fff; background:rgba(16,24,40,0.4); border:none; border-radius:16px; padding:7px 12px; cursor:pointer; font-family:var(--sans); }
+  .modal-del:hover { background:var(--red-500); }
+  .modal-cover { height:220px; background-size:cover; background-position:center; position:relative; cursor:grab; user-select:none; touch-action:none; }
+  .modal-cover.dragging { cursor:grabbing; }
+  .modal-cover-empty { margin:44px 28px 0; height:80px; border:1.5px dashed var(--border); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600; color:var(--gray-400); cursor:pointer; }
+  .modal-cover-empty.dragover { border-color:var(--accent); color:var(--accent); background:var(--brand-25); }
+  .modal-cover-empty input { display:none; }
+  .modal-body { display:grid; grid-template-columns:1fr 300px; gap:36px; padding:28px 32px 40px; align-items:start; }
+  .modal-main { min-width:0; }
+  .modal-cat-pill { display:inline-block; font-size:12px; font-weight:700; color:#fff; background:var(--gray-900); border-radius:16px; padding:5px 14px; margin-bottom:14px; }
+  .modal-title { font-size:30px; font-weight:700; letter-spacing:-0.5px; line-height:1.15; margin-bottom:18px; }
+  .modal-title:empty:before { content:"Untitled"; color:var(--gray-300); }
+  .modal-notes .ql-editor { font-family:var(--sans); font-size:15px; line-height:1.75; color:var(--ink2); padding:0; min-height:120px; }
+  .modal-notes .ql-editor.ql-blank::before { color:var(--gray-300); font-style:normal; left:0; }
+  .modal-notes .ql-editor img { max-width:100%; border-radius:10px; margin:10px 0; }
+  .modal-notes-drop.dragover .ql-editor { background:var(--brand-25); border-radius:10px; }
+  .modal-notes-hint { font-size:11px; color:var(--gray-300); margin-top:12px; }
+  .facts { border:1px solid var(--border); border-radius:14px; padding:4px 18px; }
+  .fact { padding:15px 0; border-bottom:1px solid var(--border); }
+  .fact:last-child { border-bottom:none; }
+  .fact-label { font-size:11px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink3); margin-bottom:6px; }
+  .fact-val { font-size:14px; color:var(--ink2); line-height:1.5; }
+  .fact-link { display:inline-block; margin-top:8px; font-size:13px; font-weight:600; color:var(--accent); text-decoration:none; }
+  .fact-link:hover { text-decoration:underline; }
+  .fact-tip { background:var(--brand-25); border-radius:10px; padding:13px 15px; margin-top:4px; }
+  .fact-tip .fact-label { color:var(--brand-700); }
+  .fact-map { margin-top:4px; border-radius:10px; overflow:hidden; border:1px solid var(--border); }
+  .fact-map iframe { display:block; width:100%; height:150px; border:0; }
+  @media (max-width:760px){
+    .modal-backdrop { padding:0; align-items:flex-end; }
+    .modal { max-width:100%; border-radius:18px 18px 0 0; max-height:92vh; overflow-y:auto; animation:sheetup 0.24s ease; }
+    @keyframes sheetup { from{transform:translateY(100%)} to{transform:translateY(0)} }
+    .modal-body { grid-template-columns:1fr; gap:24px; padding:22px 20px 40px; }
+    .modal-sheet-handle { display:block; width:38px; height:4px; border-radius:2px; background:var(--gray-300); margin:10px auto 0; }
+    .modal-cover { height:180px; }
+  }
+  .modal-sheet-handle { display:none; }
+
+  /* ---------- editable category pills row ---------- */
+  .cat-manage { display:inline-flex; align-items:center; gap:6px; margin-left:8px; }
+  .cat-edit-btn { font-size:12px; font-weight:600; color:var(--ink3); background:none; border:1px solid var(--border); border-radius:16px; padding:5px 11px; cursor:pointer; font-family:var(--sans); }
+  .cat-edit-btn:hover { color:var(--accent); border-color:var(--accent); }
+  .cat-editor { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px 16px; margin:0 0 20px; box-shadow:var(--card-shadow); }
+  .cat-editor-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .cat-editor-row input { flex:1; font-family:var(--sans); font-size:13px; padding:7px 10px; border:1px solid var(--border); border-radius:6px; outline:none; }
+  .cat-editor-row input:focus { border-color:var(--accent); }
+  .cat-editor-row input[type=color] { flex:0 0 34px; height:32px; padding:2px; cursor:pointer; }
+  .cat-editor-del { background:none; border:none; color:var(--gray-400); cursor:pointer; font-size:15px; padding:4px; }
+  .cat-editor-del:hover { color:var(--red-500); }
+  .cat-editor-add { font-size:12px; font-weight:600; color:var(--accent); background:none; border:1px dashed var(--border); border-radius:6px; padding:7px 12px; cursor:pointer; font-family:var(--sans); width:100%; margin-top:4px; }
+  .cat-editor-add:hover { background:var(--brand-25); border-color:var(--accent); }
+
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script>
+const { useState, useMemo, useEffect, useRef, createElement: h } = React;
+const STORAGE_KEY = "japan-guide-data-v3";
+const genId = () => "id-" + Date.now() + "-" + Math.random().toString(36).slice(2,7);
+function ensureIds(data) {
+  if (!data.categories) data.categories = JSON.parse(JSON.stringify(CATS));
+  data.cities.forEach(c => { if (!c.id) c.id = genId(); c.items.forEach(it => { if (!it.id) it.id = genId(); }); });
+  data.general.items.forEach(it => { if (!it.id) it.id = genId(); });
+  return data;
+}
+
+const CATS = [
+  { id:"all", label:"All" }, { id:"food", label:"Food & Drink" },
+  { id:"coffee", label:"Coffee" }, { id:"craft", label:"Craft & Shopping" },
+  { id:"offbeat", label:"Offbeat" }, { id:"daytrip", label:"Day Trips" },
+];
+
+const DEFAULT_CITIES = [
+  { id:"tokyo", name:"Tokyo", kana:"東京", dates:"Nov 17–21 · Dec 2–5",
+    blurb:"Your bookends. Start slow in leafy Naka-Meguro, end in the neon of Akihabara. Techwear, coffee and craft are all here if you know where to look.",
+    items:[
+      { cat:"craft", title:"Nepenthes Aoyama", note:"The single best stop for your list: Needles, Engineered Garments, South2 West8 and Goldwin all under one roof. The mothership; deeper stock than any Amsterdam or Paris outpost.", tip:"You wear S in S2W8 (124cm chest). Go early, weekdays, before Omotesandō fills up.", addr:"Nepenthes Aoyama, 4 Chome-21-28 Minamiaoyama, Minato, Tokyo" },
+      { cat:"craft", title:"Omotesandō-dōri", note:"Tokyo's shopping spine, where Harajuku spills into Aoyama and flagship architecture reigns supreme. Even a window-shopping walk shows how seriously Japanese retail treats space.", addr:"Omotesando, Shibuya, Tokyo" },
+      { cat:"craft", title:"Naka-Meguro backstreets", note:"Small artisan shops and third-wave roasters line the sakura-flanked Meguro River. Less about big names, more about the trendy, cafe-going crowd that quietly built this neighbourhood's reputation.", tip:"Your first hotel is right here. Do this on arrival day when you're too jetlagged for anything ambitious.", addr:"Naka-Meguro, Meguro, Tokyo" },
+      { cat:"coffee", title:"Bear Pond Espresso", note:"Shimo-Kitazawa. Opened 2009 by NY-trained maverick Katsuyuki Tanaka. Famously exacting; the signature 'Angel Stain' shot is only pulled at certain hours. A pilgrimage, not a quick cup.", tip:"Cash only, tiny, no photos of the counter. Go for the ritual.", addr:"Bear Pond Espresso, Kitazawa, Setagaya, Tokyo" },
+      { cat:"coffee", title:"Little Nap Coffee Stand", note:"A tiny counter on the quiet edge of Yoyogi Park, Harajuku side. Grab a cup and walk into the green, the LP-endorsed way to start a Harajuku day.", addr:"Little Nap Coffee Stand, Yoyogi, Shibuya, Tokyo" },
+      { cat:"coffee", title:"Sarutahiko Coffee", note:"Ebisu-born roaster, now a local institution. Reliable, characterful, well-pulled: a good default when you want quality without hunting.", addr:"Sarutahiko Coffee Ebisu, Shibuya, Tokyo" },
+      { cat:"coffee", title:"Onibus Coffee", note:"Nakameguro, right in your arrival neighbourhood. A direct-trade-focused roaster serious enough that Tokyo residents name it alongside Bear Pond as the real craft standard. This is your Rum Baba/DAK equivalent.", tip:"Small, no-frills counter. Go for the beans, not the seating.", addr:"Onibus Coffee Nakameguro, Meguro, Tokyo" },
+      { cat:"coffee", title:"Fuglen Tokyo", note:"A Norwegian-Japanese collaboration in Tomigaya, minimalist and unfussy about being anything other than genuinely good at the bean. Doubles as a cocktail bar after dark.", addr:"Fuglen Tokyo, Tomigaya, Shibuya, Tokyo" },
+      { cat:"coffee", title:"Kissaten hunting", note:"Tokyo's old-school coffee houses: dark wood, siphon brews, jazz or classical, no laptops. Jazz & Coffee Masako and the 1926-era silent listening cafés are a world away from third-wave.", tip:"Respect the quiet-rule rooms: no talking, no photos. Just coffee and records.", addr:"Jazz Coffee Masako, Tokyo" },
+      { cat:"food", title:"Ebisu Yokochō", note:"A covered warren of tiny izakaya stalls: loud, elbow-to-elbow, cheap, brilliant. The antidote to a polished restaurant night. Point at what looks good.", price:"¥¥", addr:"Ebisu Yokocho, Ebisu, Shibuya, Tokyo" },
+      { cat:"food", title:"Fine dining, final days", note:"Your Dec 2–5 window is for the big meals. Hakuun (2-star crab omakase) via omakase.in was the target; book the moment December dates open at 10:00 JST.", tip:"Always cross-check the current Michelin guide before booking; listings shift year to year.", price:"¥¥¥", addr:"Hakuun, Tokyo" },
+      { cat:"food", title:"Afuri Ramen", note:"Yuzu-scented shio ramen, lighter and citrusy, not the heavy tonkotsu default. The Ebisu original is the flagship; open late, good solo-diner counter seating.", price:"¥", addr:"Afuri Ebisu, Ebisu 1-1-7, Shibuya, Tokyo" },
+      { cat:"food", title:"Tsuta Ramen", note:"The first ramen shop ever to hold a Michelin star (2016), a genuine turning point for the whole cuisine. It relocated to Yoyogi-Uehara in 2019, and since the 2024 guide no ramen shop holds a star anymore, all three demoted to Bib Gourmand. The truffle-oil shoyu broth is still excellent regardless of the plaque.", price:"¥¥", addr:"Japanese Soba Noodles Tsuta, Yoyogi-Uehara, Shibuya, Tokyo" },
+      { cat:"food", title:"Standing sushi bars, Tsukiji outer market", note:"Skip the pricier inner-market tourist sets. The outer market's standing sushi counters are fast, fresh and unpretentious. Go early, eat, move on.", price:"¥¥", addr:"Tsukiji Outer Market, Chuo, Tokyo" },
+      { cat:"food", title:"Golden Gai izakaya crawl", note:"A maze of alleyways in Shinjuku, hundreds of tiny bars; some seat 5 people. Pick one with an open door and no cover charge sign; wander until something feels right.", tip:"Many are regulars-only or Japanese-only: look for 'welcome' or English signage before sitting down.", price:"¥¥", addr:"Golden Gai, Kabukicho, Shinjuku, Tokyo" },
+      { cat:"food", title:"Depachika (department store basements)", note:"The food floor in the basement of any big department store (Isetan Shinjuku is the benchmark): bento, wagashi, pickles, sake, all top-tier and easy to graze without committing to a sit-down meal.", price:"¥", addr:"Isetan Shinjuku, Shinjuku 3-14-1, Tokyo" },
+      { cat:"offbeat", title:"Akihabara Radio Kaikan", note:"Eight floors of anime, figures, trading cards and electronics: the otaku heart of AkB. Your Dec 2–5 base puts you minutes away. Sukuna figure hunting starts here.", tip:"Compare floors before buying: same figure, different shops, different prices.", addr:"Akihabara Radio Kaikan, 1 Chome-15-16 Sotokanda, Chiyoda, Tokyo" },
+      { cat:"offbeat", title:"Nakano Broadway", note:"Where serious Tokyo collectors go once they're done with Akihabara. Four quiet floors, ~30 Mandarake specialty stores, first-edition manga, discontinued figures, animation cels. Calmer, cheaper, almost entirely Japanese collectors rather than tourists.", tip:"Some shops close Wednesdays. Try the Daily Chico soft-serve stand in the basement, eight flavours, deeply photogenic.", addr:"Nakano Broadway, Nakano, Tokyo" },
+      { cat:"craft", title:"Kiddy Land Harajuku", note:"The single best kawaii stop in Tokyo: five floors, open since 1950, the widest range of Sanrio, Rilakkuma and Sumikko Gurashi under one roof, plus exclusive colourways you won't find elsewhere.", tip:"Go on a weekday. Weekends get properly crowded.", addr:"Kiddy Land Harajuku, Jingumae, Shibuya, Tokyo" },
+      { cat:"craft", title:"Donguri Republic (Ghibli official store)", note:"The official Studio Ghibli shop: proper Totoro plush for your niece, gachapon, and full scene displays. The real deal, not a knockoff stand.", addr:"Donguri Republic, Tokyo Skytree Town Solamachi" },
+      { cat:"food", title:"Kaku-uchi standing sake bars", note:"A liquor-shop-by-day, standing-bar-by-night format: buy a bottle at retail price, drink it right there at the counter. Fujita in Kanda (est. 1928, no website, purely local) is the classic example of this format done right.", tip:"Ebisu and Daikanyama are the hub for the newer 'natural sake' movement (kimoto/yamahai methods), if you want something more contemporary than a 1928 institution.", addr:"Fujita, Kanda, Chiyoda, Tokyo" },
+      { cat:"food", title:"Ippodo Tea", note:"A legendary Kyoto tea merchant's Tokyo outpost in Marunouchi. Matcha, sencha, gyokuro and hojicha, sourced and prepared to a standard most tourist tea experiences don't bother with, at accessible daily prices rather than special-occasion ones.", addr:"Ippodo Tokyo, Marunouchi, Chiyoda, Tokyo" },
+      { cat:"offbeat", title:"Design Festa Gallery", note:"Harajuku backstreets. A rotating, chaotic independent-art space: no curation gatekeeping, just whatever artists brought. The anti-polished side of Tokyo creativity.", addr:"Design Festa Gallery, Jingumae, Shibuya, Tokyo" },
+      { cat:"daytrip", title:"Ghibli Museum, Mitaka", note:"An easy hop from central Tokyo. Lottery-only tickets via the Lawson system; no OTA sells them. Your eligible dates were Nov 18–20 or Dec 2–4.", tip:"Mariko-sensei can help with the Japanese Lawson Loppi purchase. JTB Sunrise Tours is the guaranteed (pricier) fallback.", addr:"Ghibli Museum, Mitaka, Tokyo" },
+      { cat:"offbeat", title:"teamLab", note:"Immersive digital-art playground, the kind of thing that photographs unlike anywhere else. Book timed tickets ahead; it sells out.", addr:"teamLab Tokyo" },
+      { cat:"food", title:"Narukiyo", note:"A hideaway izakaya in a Shibuya basement (between Shibuya and Omotesando), opened 2003 by chef Shigekiyo Yoshida. His deep love of fashion, music and subculture shows in everything: the poster-lined walls, the tableware, the vibe. Off-the-grid, no website, no online booking, notoriously hard to get into. Counter omakase, superb sashimi and sake. Explicitly 'the real Japan, not for tourists'. From Elodie's list.", tip:"Reservations essential and tricky without a local connection; a concierge service can help. Sit at the counter, order omakase.", price:"¥¥¥", addr:"Narukiyo, 2-7-14 Shibuya, Shibuya City, Tokyo" },
+      { cat:"food", title:"CENSU Tokyo", note:"A genre-blurring izakaya 'reimported' from Hong Kong (Gaienmae, near Meiji Park), chef Fumiyuki Kinsu, French-Michelin-trained. HK × Tokyo design: Japanese cedar meets neon tubes, counter and lantern-lit terrace seating, natural wine. Playful third-culture dishes (Hong Kong Wing, the drunken clam). Trendy and consistently booked; on Elodie's list.", tip:"Book ahead. Counter for the cooking view, terrace upstairs for the vibe.", price:"¥¥¥", addr:"CENSU Tokyo, 2-5-8 Jingumae, Shibuya City, Tokyo" },
+      { cat:"offbeat", title:"Bar Benfiddich", note:"An apothecary-style cocktail bar in Nishi-Shinjuku run by farmer-turned-bartender Hiroyasu Kayama: no menu, house-grown and foraged herbs from his Saitama farm, house-distilled absinthe, drinks built to your described mood. Just 17 seats, ranked #18 in the World's 50 Best Bars 2025. Craft-obsessed and non-touristy, exactly your lane.", tip:"Reservation-only via TableCheck, three time slots. 9th floor, easy to miss. Sister bar B&F on the 2nd floor.", price:"¥¥", addr:"Bar Benfiddich, 9F 1-13-7 Nishishinjuku, Shinjuku City, Tokyo" },
+      { cat:"food", title:"Ahiru Store", note:"A tiny 8-seat natural-wine bar at the far end of Tomigaya (near Yoyogi-koen), with a cult following. Sibling-run: brother Teruhiko on the wine (little-known French naturals by the glass), sister Wakako on the bread and bistro food, famous rillettes, pâtés, rustic loaves. Cash-only, no English menu, real queues before opening.", tip:"Your list marked it 'temporarily closed', recheck nearer the date. Get there before opening or expect a long wait.", price:"¥¥", addr:"Ahiru Store, 1-19-4 Tomigaya, Shibuya City, Tokyo" },
+      { cat:"offbeat", title:"The Bellwood", note:"A stylish Shibuya bar (Udagawacho) from the acclaimed SG Group, inspired by old Japanese cafés, tea and coffee flavours woven into the cocktails, plus a back bar for experimental food-and-drink. Design-forward and well-regarded.", price:"¥¥", addr:"The Bellwood, 41-31 Udagawacho, Shibuya City, Tokyo" },
+      { cat:"food", title:"Hikiniku to Come (Shibuya)", note:"The viral hamburg-steak spot that does one thing with total focus: three 100% Japanese-beef patties served in stages, first plain off the grill, second with grated daikon and ponzu, third dipped in raw egg, unlimited rice and miso soup, ~¥1,820. Interactive and genuinely fun.", tip:"Reservations open Fridays 9am JST for the next week; walk-ins not accepted. Up a narrow staircase, allow time to find it.", price:"¥¥", addr:"Hikiniku to Come Shibuya, 1-2-3 Dogenzaka, Shibuya City, Tokyo" },
+      { cat:"food", title:"Yakitori Omino", note:"A 14-seat Michelin-starred yakitori counter in Oshiage (near the Skytree), chef Masayoshi Komino trained six years at Torishiki. Salt-forward, Date-brand chicken over binchōtan, sommelier-led sake/wine pairings. Off the west-side expense-account circuit, quieter and craft-first, and relatively foreigner-friendly to book. Pairs naturally with Torishiki, its parent house.", tip:"Reservations open ~2 months out and fill fast (omakase.in).", price:"¥¥¥", addr:"Yakitori Omino, 1-38-4 Oshiage, Sumida City, Tokyo" },
+      { cat:"food", title:"Shu-tei Tanaka (yakitori)", note:"A Michelin Bib Gourmand yakitori counter in Sumida, the warmth of a neighbourhood izakaya with dedicated-counter precision, at accessible prices. Unpretentious and satisfying.", price:"¥¥", addr:"Shutei Tanaka, Sumida City, Tokyo" },
+      { cat:"food", title:"Yoroniku Ebisu", note:"The Ebisu branch of the famed Minami-Aoyama Yoroniku, top-tier wagyu yakiniku: signature Silk Loin, rare cuts like Chateaubriand and zabuton, wagyu-and-caviar dishes. The omakase runs ~¥22,000. Some of Tokyo's most sought-after grilled meat.", tip:"Books online one month ahead, 1st of the month at 11am, and goes fast. No under-17s.", price:"¥¥¥", addr:"Yoroniku Ebisu, Ebisu, Shibuya City, Tokyo" },
+      { cat:"food", title:"USHIGORO S Ginza", note:"The luxurious, private-room arm of the Ushigoro yakiniku group in Ginza. A5 black wagyu, courses like the Namiki (~¥16,500), wagyu sashimi with sea urchin and caviar. Intimate and polished; the group also has a Michelin-starred kappo sibling.", tip:"Course-based; reserve ahead. Ginza-itchome, 7th floor.", price:"¥¥¥", addr:"USHIGORO S Ginza, Ginza, Chuo City, Tokyo" },
+      { cat:"craft", title:"NUIR Vintage", note:"Luxury pre-owned in Shibuya (Dogenzaka, SPARK building): one of the widest selections of vintage designer bags in the city, Chanel, LV, Prada, Gucci, Dior, in excellent condition. Organized, unhurried, tax-free, genuinely helpful staff (there's even a rest/gaming area for whoever you drag along). 5,000+ items.", tip:"Multi-tenant building, take the elevator up. Tax-free available.", addr:"NUIR Vintage, Dogenzaka, Shibuya City, Tokyo" },
+      { cat:"craft", title:"AMORE Omotesando", note:"The cult vintage boutique in the Omotesando backstreets, the pink-black-white striped interior you've seen all over TikTok. Tightly curated, Chanel-heavy: glass cases of quilted bags, racks of tweed, archive-feeling accessories. Polished and investment-grade.", addr:"AMORE Omotesando, 26-8 Sarugakucho, Shibuya City, Tokyo" },
+      { cat:"craft", title:"QOO Vintage", note:"A long-popular Tokyo vintage destination, full of finds, with a top floor stocked with Hermès and watches and a Chanel-only level just down the stairs from the entrance.", addr:"QOO Vintage, Shibuya, Tokyo" },
+      { cat:"craft", title:"CASANOVA Vintage", note:"Vintage with a lot of street-style and limited-edition collaboration pieces, strong curation and variety across clothing and bags. A good counterpoint to the bag-focused luxury shops.", addr:"CASANOVA Vintage Ginza, Chuo City, Tokyo" },
+      { cat:"craft", title:"KOMEHYO / KOMEHYO Vintage", note:"The big, reliable multi-brand pre-owned name, deep selection across every house and bag style, with a newer Vintage Atelier for higher-end curation and limited editions. Branches in Shinjuku and Ginza.", tip:"KOMEHYO Vintage Tokyo (Shinjuku) for limited editions; KOMEHYO Ginza if you're in that area.", addr:"KOMEHYO Shinjuku, Shinjuku City, Tokyo" },
+      { cat:"craft", title:"BRAND OFF (Ginza)", note:"A well-stocked pre-owned luxury shop in Ginza, part of the vintage-bag circuit alongside Allu and Komehyo. Good for hunting a specific piece.", addr:"BRAND OFF Ginza, Chuo City, Tokyo" },
+      { cat:"craft", title:"Paradise Vintage", note:"A vintage shop in Jingumae (Harajuku area), on the vintage-hunting trail with a bag-and-clothing selection. Central to the Harajuku/Omotesando vintage loop.", addr:"Paradise Vintage, 3-27-4 Jingumae, Shibuya City, Tokyo" },
+      { cat:"coffee", title:"Koffee Mameya", note:"The standing-only bean specialist in the Omotesando backstreets, spiritual successor to Omotesandō Koffee, from master barista Eiichi Kunitomo. 20-30 curated coffees daily from roasters worldwide; lab-coated baristas match beans to your taste and talk roast, acidity and mouthfeel. Coffee as craft, not caffeine. Espresso/filter ~¥380-2,300.", tip:"No seats, no milk. Expect a queue at peak. Bean bags to take home.", price:"¥", addr:"Koffee Mameya, 4-15-3 Jingumae, Shibuya City, Tokyo" },
+      { cat:"coffee", title:"Koffee Mameya Kakeru", note:"The 'multiply' concept in Kiyosumi-Shirakawa (Tokyo's warehouse coffee district): seated, coffee served as flights and courses, a 'coffee kaiseki', plus coffee cocktails and mocktails. A genuine tasting-menu experience for the seriously curious. Courses ~¥3,500-6,000+.", tip:"Reservation-based tasting courses. Pair with the nearby Museum of Contemporary Art.", price:"¥¥", addr:"Koffee Mameya Kakeru, Kiyosumi-Shirakawa, Koto City, Tokyo" },
+      { cat:"coffee", title:"The Matcha Tokyo Omotesando", note:"A pared-down organic-matcha tea house off Cat Street, tatami benches, an irori hearth, a layered matcha-coffee latte, soy/almond options, matcha powder and tools for sale. Trendy but calm; there's a Matcha Experience if you want to learn to whisk. Small chain (also Shibuya, Shinjuku).", price:"¥", addr:"THE MATCHA TOKYO Omotesando, 6-14-17 Jingumae, Shibuya City, Tokyo" },
+      { cat:"coffee", title:"IPPUKU & MATCHA (Nihonbashi)", note:"The world's first single-origin Uji matcha specialty shop, celebrating individual cultivars with no blending (straw-shaded leaves, stone-ground). Matcha lattes with adjustable concentration and sweetness, matcha beer, the famous Uji matcha Basque cheesecake, and a reservation-only 4-seat tea room for matcha flights and courses. For the tea-serious.", tip:"Book the tea room for the flight; walk-in for lattes and the cheesecake. Second branch in Yoyogi-Uehara.", price:"¥", addr:"IPPUKU & MATCHA Nihonbashi, Nihonbashi Mitsui Tower 1F, 2-1-1 Nihonbashi Muromachi, Chuo City, Tokyo" },
+      { cat:"offbeat", title:"Super Potato (Akihabara)", note:"The famous retro-gaming temple: Famicom, MSX, rare cartridges, consoles and figurines across three floors, with a playable retro arcade on the 5th. Right by your Dec 2-5 Akihabara base and squarely your gaming/retro lane.", tip:"Prices are landmark-high (a game here can be 3x a normal secondhand shop). Great to browse and play; hunt bargains at the smaller Akihabara shops. Look up, the sign isn't at street level.", addr:"Super Potato Akihabara, 3-5F Kitabayashi Bldg, 1-11-2 Sotokanda, Chiyoda City, Tokyo" },
+      { cat:"food", title:"Pizza 4P's Tokyo", note:"The first Japan branch (Azabudai Hills) of the acclaimed Vietnam-born Japanese-Italian pizza chain, known for house-made fresh cheese produced daily and a real sustainability focus. Polished, popular, well worth booking.", tip:"Reserve via TableCheck; Azabudai Hills is also a nice modern complex to wander.", price:"¥¥", addr:"Pizza 4P's Tokyo, Azabudai Hills Garden Plaza D 1F, Minato City, Tokyo" },
+      { cat:"food", title:"Seirinkan", note:"A reference-point Neapolitan pizzeria in Nakameguro (walkable from your first hotel) from chef Susumu Kakinuma, who studied in Italy and trained many of Tokyo's pizza chefs. Minimalist menu, essentially margherita and marinara, in a multi-floor steampunk-metal-and-Beatles setting (Beatles-only soundtrack). Featured on David Chang's 'Ugly Delicious'.", tip:"Phone/TableEX booking, 90-min seating, strict on punctuality (15 min late = cancelled). Arrive a few minutes early.", price:"¥¥", addr:"Seirinkan, 2-6-4 Kamimeguro, Meguro City, Tokyo" },
+      { cat:"craft", title:"Pokémon Center Shibuya", note:"The most design-forward Pokémon Center (Shibuya Parco 6F): the only one with Mew/Mewtwo as mascots rather than Pikachu, a life-size animatronic Mewtwo, a graffiti collab with artist Number-D (street-art Pikachu, skate decks), and a Design Lab for custom tees. Good for your niece's gift, and genuinely a nice space.", tip:"On busy weekends the 6F opens at 10:00 with a queue from 09:30 and a LINE-app lottery at peak. Nintendo Tokyo and a Capcom Store are on the same floor.", addr:"Pokemon Center Shibuya, Shibuya Parco 6F, 15-1 Udagawacho, Shibuya City, Tokyo" },
+      { cat:"craft", title:"Nintendo Tokyo", note:"Nintendo's first directly-operated store in Japan, a few steps from Pokémon Center Shibuya on the same Parco floor. Stocks the Nintendo-side games and merch (including Pokémon items) the Center doesn't. One easy stop for both.", addr:"Nintendo TOKYO, Shibuya Parco 6F, 15-1 Udagawacho, Shibuya City, Tokyo" },
+      { cat:"offbeat", title:"GiGO Akihabara Building 3", note:"The former SEGA Building 3, a multi-floor Akihabara arcade: claw machines on the lower floors, rhythm and racing games above, and a standout 6th floor of well-kept retro cabinets, OutRun, Ridge Racer, Virtua Racing, Daytona USA 2, with seating. 3 min from Akihabara, right by your base.", tip:"Bring cash for the coin machines; foreign cards don't work on most. Head straight up to the 6th floor for the retro gems.", addr:"GiGO Akihabara Building 3, 1-11-11 Sotokanda, Chiyoda City, Tokyo" },
+      { cat:"food", title:"Butagumi", note:"The tonkatsu connoisseur's pick, in a renovated 2003 townhouse in Nishi-Azabu, a 'select shop for pigs': 20+ rotating premium breeds (Japanese brands plus Spanish Iberico de Bellota and Hungarian Mangalica), a French-trained chef who treats the oil, rice and pickles as carefully as the cutlet. Signature 'Submarine' (aged Himuro buta). Choose hire (lean fillet) or rosu (fattier loin), or a 5-breed flight.", tip:"Book 30 days ahead (fixed time slots). Closed Mondays and 2nd/4th Tuesdays. Casual outpost Butagumi Dining is in Roppongi Hills next to Afuri.", price:"¥¥¥", addr:"Butagumi, 2-24-9 Nishiazabu, Minato City, Tokyo" },
+      { cat:"food", title:"Tonkatsu Maisen Aoyama", note:"The famous long-standing tonkatsu house in Aoyama, set in a converted former bathhouse. The popular, reliable benchmark for a classic tonkatsu set, less niche than Butagumi but consistently good.", price:"¥¥", addr:"Tonkatsu Maisen Aoyama, 4-8-5 Jingumae, Shibuya City, Tokyo" },
+      { cat:"food", title:"Gyukatsu Motomura", note:"Beef-katsu (breaded, rare-fried wagyu) where each slice comes out pink and you finish cooking it yourself on a hot stone at your table. Great fun and cheap-ish; branches in Harajuku and Shibuya. Rated ~4.8.", tip:"Expect a queue at peak; go off-hours. The Shibuya and Harajuku branches are both handy.", price:"¥¥", addr:"Gyukatsu Motomura Harajuku, 3-32-2 Jingumae, Shibuya City, Tokyo" },
+      { cat:"food", title:"Tendon Kaneko Hannosuke", note:"The famous Edomae tendon: conger eel, prawns, squid and vegetable tempura fried in sesame oil, a soft-boiled egg, all over rice with a 'secret' sweet-savoury donburi sauce, for ~¥980. The Nihonbashi Honten (near Mitsukoshimae) is the original; there's a Tsukiji branch too. Counter seating, watch it fried in front of you.", tip:"Long queues, go early. Order the regular over the deluxe for value; you can ask for less rice or swap eel for white fish.", price:"¥", addr:"Tendon Kaneko Hannosuke Nihonbashi Honten, 1-11-15 Nihonbashi Muromachi, Chuo City, Tokyo" },
+      { cat:"food", title:"Kitsuneya", note:"A 1947 standing-counter institution right on the main road of Tsukiji Outer Market. Signature horumon-don, beef offal slow-simmered in rich hatchō miso over rice, plus gyūdon and nikudōfu. Cheap, intense, deeply local, unmistakable by the queue and the smell of stewed beef. Pairs perfectly with the Tsukiji standing sushi.", tip:"Cash only, ~¥800 + ¥100 for an onsen egg. Open 7:00-13:30 only; get there before 9 to avoid the worst wait.", price:"¥", addr:"Kitsuneya, 4-9-12 Tsukiji, Chuo City, Tokyo" },
+      { cat:"food", title:"Fuunji", note:"The tsukemen institution since 2007, near Shinjuku's south side. Double-soup dipping noodles: a rich chicken-bone (toripaitan) broth plus a second fish soup, chewy noodles, chashu, bamboo, a hidden ajitama egg. Ticket machine, ~15 seats, a near-constant queue that moves fast, get in, slurp, get out.", tip:"¥750 ramen / ¥800 tsukemen; most come for the tsukemen. A quieter second branch is in Tokyo Ramen Yokocho by Tokyo Station.", price:"¥", addr:"Fuunji, 2-14-3 Yoyogi, Shibuya City, Tokyo" },
+      { cat:"food", title:"Ginza Hachigou", note:"Fine-dining ramen from chef Yasushi Matsumura, who cooked French for 36 years first. A Bib Gourmand (formerly Michelin-starred) consommé-style bowl blending Cochin chicken, duck, scallops, ham, kombu, onion, dried tomato and shiitake, seasoned only with sea salt. More haute cuisine than counter joint.", tip:"Tiny and famous; reservations are essentially a must. In Ginza.", price:"¥¥", addr:"Ginza Hachigou, 3-14-12 Ginza, Chuo City, Tokyo" },
+      { cat:"food", title:"Sushi: high-end omakase (Elodie's list)", note:"A cluster of top-tier counter-omakase spots Elodie saved, all excellent, differing mainly by chef, price and district (¥10,000+). Kidoguchi (Minami-Aoyama, ~30-year Edomae veteran), Higashiazabu Amamoto (Michelin), Sushi Akira, Sushi Komurasaki, Sushi m, Ginza Sushi Nakamoto, Mugen, Kihara, Nihonbashi Kakigaracho Sugita, Sushi Yasaka, Sushi Kakida, Otome Sushi. Pick one by neighbourhood and book well ahead.", tip:"These book weeks out, often via omakase.in or the restaurant directly. Search the specific name in Maps for the exact counter you want.", price:"¥¥¥", addr:"Sushi Kidoguchi, Minami-Aoyama, Minato City, Tokyo" },
+      { cat:"food", title:"Sushi: mid-range (Elodie's list)", note:"More accessible sushi Elodie saved (~¥3,000–9,000), still serious but easier on the wallet and the booking. Sushi Yajima, Kashiwai, Sushi Ginza Onodera Musuko (Shibuya), Sushi Ippei, Sushi TAKAYA, Yamasan Sushi Honten, Iki-iki Tei. A good middle path when you want quality without the full omakase splurge.", tip:"Many take same-week reservations; some walk-ins at off-peak. Confirm the branch in Maps.", price:"¥¥", addr:"Sushi Ginza Onodera Musuko, Shibuya City, Tokyo" },
+      { cat:"food", title:"Sushi: value, standing & conveyor (Elodie's list)", note:"Fast, fresh, affordable sushi Elodie saved for when you don't want a formal meal. Standing: Uogashi Nihon-Ichi (Shibuya + others), Uogashi Standing Sushi Bar. Conveyor/quick: Uobei/Tenkazushi Dogenzaka (Shibuya, order by touchscreen, plates zoom out on a rail), Kaiten Sushi Toriton, Tanuki Sushi, Sushimon (Ginza + Akasaka), Toyama Sushi Ginza, Miko Sushi Ginza. Cheap, solo-friendly, no reservations.", tip:"Uobei is the fun gimmicky one; the standing Uogashi bars are the better fish for the price.", price:"¥", addr:"Uogashi Nihon-Ichi Shibuya Dogenzaka, Shibuya City, Tokyo" },
+    ]},
+  { id:"kamakura", name:"Kamakura", kana:"鎌倉", dates:"Nov 28 – Dec 2",
+    blurb:"Japan's first feudal capital, now the most laid-back of its ancient cities. Black-sand beach, coastal Fuji views, 65 temples in the hills, and Mariko-sensei to guide you. Your wind-down.",
+    items:[
+      { cat:"offbeat", title:"The Great Buddha (Daibutsu)", note:"One of Japan's most photographed sights, and even more impressive in real life. The 93-tonne, 11.4m bronze Buddha sits in the open air, its weathered green-blue skin bare to sky and trees since a tsunami destroyed its hall in 1498. For a small fee you can walk inside.", tip:"Arrive near last entry (~30 min before closing). Golden-hour light hits the face and the crowds thin right out.", addr:"Kotoku-in, 4 Chome-2-28 Hase, Kamakura" },
+      { cat:"offbeat", title:"Zeniarai Benten", note:"A shrine hidden inside a cave, where legend says money washed in the spring doubles. Reached through a tunnel in the hills, one of Kamakura's strangest, most atmospheric corners.", addr:"Zeniarai Benten Shrine, Sasukegayatsu, Kamakura" },
+      { cat:"offbeat", title:"Zazen at Kenchō-ji", note:"Japan's oldest Zen monastery, founded in 1253. Beginner-friendly zazen meditation runs Friday and Saturday evenings. Instruction is in Japanese; just follow the room. Quietly profound.", addr:"Kencho-ji, 8 Yamanouchi, Kamakura" },
+      { cat:"coffee", title:"Cheeers Coffee", note:"Sleek little spot tucked near the Great Buddha, pouring seriously good oat lattes and jasmine tea. The modern-coffee stop on a temple day.", price:"¥", addr:"Cheeers Coffee, Hase, Kamakura" },
+      { cat:"coffee", title:"Iwata Coffee Shop", note:"Kamakura's oldest café, retro to its bones, its towering fluffy pancakes reputedly adored by John Lennon and Yoko Ono during their stays nearby.", tip:"The pancakes take time to make. That's the point: sit, wait, watch the town.", price:"¥", addr:"Iwata Coffee, Komachi, Kamakura" },
+      { cat:"coffee", title:"Café Vivement Dimanche", note:"Near Kamakura station. Coffee in every form: jelly, slushees, ice cream, plus a summery lemon parfait. A local classic with real character.", price:"¥", addr:"Cafe Vivement Dimanche, Onarimachi, Kamakura" },
+      { cat:"food", title:"Matsubara-an", note:"Fine handmade soba with sophisticated side dishes in a traditional house near the Daibutsu. The quintessential Kamakura lunch.", price:"¥¥", addr:"Matsubara-an, Hase, Kamakura" },
+      { cat:"food", title:"Kinon", note:"Rustic wood-fired meat and fish meeting fine dining. The sea-urchin toast is the signature. Your one 'nicer' dinner in town.", price:"¥¥¥", addr:"Kinon, Kamakura" },
+      { cat:"food", title:"Toshimaya: Hato Sabure", note:"Baking dove-shaped butter cookies since 1894, sold in lovely gift tins. The Kamakura souvenir, and an easy, well-loved gift to bring home.", price:"¥", addr:"Toshimaya Honten, Komachi, Kamakura" },
+      { cat:"daytrip", title:"Enoshima at sunset", note:"The sun melts into Sagami Bay, casting an orange glow behind Mt Fuji until only its silhouette lingers on the horizon. A short Enoden ride, then a long pedestrian bridge, delivers you to the island for exactly this.", tip:"December is peak: the island garden overflows with tulips and fairy lights, and the Sea Candle tower is lit. Your dates are ideal.", addr:"Enoshima, Fujisawa, Kanagawa" },
+      { cat:"daytrip", title:"Enoshima Iwaya caves", note:"Windswept caves at the island's edge, carved by centuries of waves. A cartoonish dragon statue draws candle offerings, but the real draw is the sea itself, crashing through rock. The red entrance bridge is free and frames Fuji perfectly.", addr:"Enoshima Iwaya Caves, Fujisawa, Kanagawa" },
+      { cat:"daytrip", title:"Kawaguchiko / Mt Fuji", note:"~2 hours out for the classic lake-and-Fuji view. Weather-dependent: only commit when the forecast is clear, or you'll ride two hours for cloud.", tip:"Check the mountain's visibility the night before. November mornings are your best odds.", addr:"Lake Kawaguchiko, Yamanashi" },
+      { cat:"craft", title:"Komachi-dōri & hanko", note:"The pedestrian shopping street runs from the station to the big shrine: lacquerware, crafts, snacks, gifts. Your hanko seal session with master Tsukino lives in this world.", tip:"Avoid weekends: Komachi-dōri gets glacially slow and the Enoden becomes unboardable.", addr:"Komachi-dori Street, Kamakura" },
+    ]},
+  { id:"kyoto", name:"Kyoto", kana:"京都", dates:"Nov 21 – 25",
+    blurb:"Your middle stretch, and the heart of the trip for craft, food and old Japan. Base is around Pontochō/Kawaramachi, so most of these picks are walkable. Sourced largely from Elodie's list (an izakaya chef's Japan bible).",
+    items:[
+      { cat:"food", title:"Kuzushi Kotowari", note:"Counter kappo of ~9-10 seats in a machiya near Kawaramachi/Kiyamachi. A ¥8,800 monthly-changing seasonal course that breaks the stiffness of traditional kaiseki while keeping the precision. Reservation-only, rated 5.0, repeatedly called incredible value.", tip:"Reservation-only via TableCheck or Tabelog. Book ahead.", price:"¥¥¥", addr:"Kuzushi Kotowari, 239-2 Tawarayacho, Shimogyo Ward, Kyoto" },
+      { cat:"food", title:"Mamaya", note:"Tiny family-run obanzai tavern hidden down an alley off Kiyamachi, 2 min from Kawaramachi Station. Kyoto home-style cooking, reasonably priced, warm enough that solo diners feel at home. Reviewers call it the best meal of a 3-week Japan trip.", tip:"Reserve via Instagram DM or the Google Maps chat function. It's hard to find, look for the family photo.", price:"¥¥", addr:"Mamaya, 212-7 Nabeyacho, Nakagyo Ward, Kyoto" },
+      { cat:"food", title:"Ramen Muraji (Gion)", note:"Chicken-paitan ramen in a renovated 100-year-old machiya down a cobblestone Gion backstreet near Tatsumi Bridge. Understated, calm, more café than ramen joint. The lemon ramen is the signature, acidity cutting the rich chicken broth.", tip:"Closes when the soup sells out; expect a queue at peak times.", price:"¥", addr:"Ramen Muraji, Kiyomotocho 373-2, Higashiyama, Kyoto" },
+      { cat:"food", title:"Gion Unagi Kawato", note:"Kansai-style charcoal-grilled eel (unsteamed, so crispy skin and tender flesh) in a converted traditional inn on the south side of Hanamikoji in Gion. The whole-eel unaju is the standout. Rated 5.0.", tip:"Reservation recommended, online via Tabelog.", price:"¥¥¥", addr:"Gion Unagi Kawato, 572-27 Gionmachi Minamigawa, Higashiyama, Kyoto" },
+      { cat:"food", title:"Handmade Udon & Soba Shōraku", note:"Tiny third-generation udon shop in Shimogyo Ward where every bowl tastes like home cooking. Unpretentious and local.", price:"¥¥", addr:"Shoraku, 758-2 Ayanishitoincho, Shimogyo Ward, Kyoto" },
+      { cat:"coffee", title:"WEEKENDERS COFFEE Tominokōji", note:"One of Kyoto's most respected specialty roasters, the tiny Tominokōji stand hidden behind a parking lot near Kawaramachi. A destination cup, squarely in the craft-coffee lane you care about. Standing/takeaway focused.", price:"¥", addr:"Weekenders Coffee Tominokoji, 560 Nakanocho, Nakagyo Ward, Kyoto" },
+      { cat:"offbeat", title:"L'Escamoteur", note:"A theatrical cocktail bar on Kiyamachi run by Christophe Rossi, a trained magician: couch suspended from the ceiling, bottles moving by pulley, smoking cocktails, tagline 'elixirs and mystery.' Cramped, dim, often compared to a fantasy world. Fills up fast.", tip:"Arrive early, it's small and popular.", price:"¥¥", addr:"L'Escamoteur, 138-9 Saitocho, Shimogyo Ward, Kyoto" },
+      { cat:"food", title:"Chao Chao Gyoza (Sanjo Kiyamachi)", note:"Cheap-and-cheerful gyoza in an alley off Sanjo-dori, right in the Pontochō/Kiyamachi bar scene by your hotel. 10+ dumpling varieties (prawn, chicken-mozzarella, even chocolate gyoza with ice cream), ¥330 happy-hour beers. A two-time national gyoza competition winner. The chef reportedly speaks Spanish.", tip:"Queues at peak, but service is fast. Go just after opening.", price:"¥", addr:"Chao Chao Gyoza, 117 Ishiyacho, Nakagyo Ward, Kyoto" },
+      { cat:"coffee", title:"murmur coffee", note:"A cozy creekside specialty-coffee café in Shimogyo Ward, artisanal coffee with light bites (pizza toast, French toast, matcha latte). Well laid out, friendly, good for a quiet cup. 4.6.", price:"¥", addr:"murmur coffee kyoto, 103 Hachiojicho, Shimogyo Ward, Kyoto" },
+      { cat:"food", title:"Gohan-ya Isshin", note:"Modern-Japanese home cooking with a homey feel and tatami floors, in Nakagyo Ward (basement level, Daikokuchō). Everyday Kyoto food done well.", price:"¥¥", addr:"Gohan-ya Isshin Kyoto, 90 Daikokucho, Nakagyo Ward, Kyoto" },
+      { cat:"daytrip", title:"Torikiku (Uji matcha soba)", note:"NOT central Kyoto: this is in Uji, ~20 min south by train near Byōdō-in temple. A tiny, timeworn family-run soba shop run by elderly couples, specialising in hot and cold matcha soba with tempura sides. Set meals ~¥1,100, generous and heart-warming. Grab the matcha salt in a cute bottle on the way out. Pair it with a Uji matcha day trip.", tip:"Closes ~3pm, sometimes earlier. Lines move fast, especially solo.", price:"¥", addr:"Torikiku, Uji Renge 95, Uji, Kyoto" },
+      { cat:"food", title:"Kyoto KANI-GIN Kawaramachi", note:"All-you-can-eat crab (snow, king, red snow) plus sushi and Kyoto-style sukiyaki, 2 min from Kawaramachi Station. Fast service, generous portions, table seating good for groups. Courses from ~¥9,349. A blow-out crab feast rather than a refined one, worth knowing for what it is.", tip:"Reserve via Tabelog. Watch the time-limited all-you-can-eat clock.", price:"¥¥¥", addr:"Kyoto Kanigin Kawaramachi, Nakagyo Ward, Kyoto" },
+      { cat:"craft", title:"MOMOTARO JEANS Kyoto", note:"The iconic Okayama raw-denim house, in a refurbished machiya on Shinmonzen-dōri (Higashiyama). 'Tokuno Blue' deep indigo, vintage shuttle looms, Zimbabwe cotton, a mini-garden fitting-room view and on-the-spot hemming. Jeans ~¥28,000. Squarely your craft/techwear lane.", tip:"Ask for Sebastian (German-speaking staff, often praised). They can source sizes from other branches.", addr:"Momotaro Jeans Kyoto, 256-2 Umemotocho, Shinmonzen-dori, Higashiyama, Kyoto" },
+      { cat:"craft", title:"APFR (Apotheke Fragrance) Kyoto", note:"A Japanese fragrance house (candles, incense, room sprays) founded by Keita Sugasawa, drawing on herbal-medicine culture and craft. The Kyoto store is a renovated 120-year-old machiya on the corner of Nijō and Teramachi, 'water and light' design. A genuine design-object gem.", tip:"Closed Tuesdays. Kyoto-exclusive furoshiki wrapping cloths here.", addr:"APFR Kyoto, 439-1 Yamamotocho, Nijo-dori Gokomachi, Nakagyo Ward, Kyoto" },
+      { cat:"craft", title:"Kyūkyodō (Kyoto main store)", note:"Founded 1663, former stationer to the Imperial Household. Washi paper, incense, calligraphy supplies, dove-motif goods, in the original Kyoto flagship on Teramachi. The refined-souvenir stop.", addr:"Kyukyodo, Teramachi Anekoji, Nakagyo Ward, Kyoto" },
+      { cat:"craft", title:"Nishiki Market", note:"'Kyoto's Kitchen': a ~390m covered market of 100+ family-run stalls, pickles, seafood, tofu, sweets, tea, knives and kitchenware. Steps from your Pontochō/Kawaramachi base. Graze rather than sit-down.", tip:"Go earlier; it gets shoulder-to-shoulder by midday. Uchida Tsukemono for pickles.", addr:"Nishiki Market, Nakagyo Ward, Kyoto" },
+      { cat:"offbeat", title:"Matsunoo-taisha (sake shrine)", note:"One of the region's oldest shrines (est. ~700 CE), at the far western end of Shijō near Arashiyama. Its blessed spring draws sake and miso brewers who pray for their products, hence the sake connection. Pair it with an Arashiyama day.", addr:"Matsunoo Taisha, 3 Arashiyamamiyacho, Nishikyo Ward, Kyoto" },
+      { cat:"food", title:"Menya Inoichi", note:"A tiny ~10-seat ramen shop near Kawaramachi with nine straight Michelin Bib Gourmand years (2016-2024). The broth is dashi/bonito-and-seafood based rather than meat, cleaner and lighter but with real depth, and they even do a wagyu ramen. Cash-free; timed numbered tickets can run out.", tip:"Arrive early. No cash.", price:"¥¥", addr:"Menya Inoichi, 542 Ebisunocho, Shimogyo Ward, Kyoto" },
+      { cat:"food", title:"Menya Inoichi Hanare", note:"The newer, more modern sister of Menya Inoichi, near Shijo Station, famous for tsukemen (dipping noodles). Also Michelin Bib Gourmand, same clean seafood-dashi philosophy.", price:"¥¥", addr:"Menya Inoichi Hanare, 463 Senshojicho, Shimogyo Ward, Kyoto" },
+      { cat:"food", title:"Wajoryomen Sugari", note:"A machiya hole-in-the-wall ramen joint (est. 2008) on a side street near Karasuma, known for tsukemen and a signature rich pork-fish broth with grilled pork intestine. Order from a touchscreen (English option). Queues at lunch.", tip:"Closes when sold out. Get the normal tsukemen over the curry one.", price:"¥", addr:"Wajoryomen Sugari, 471-1 Kannondocho, Nakagyo Ward, Kyoto" },
+      { cat:"food", title:"Kyoto Tonkatsu Katsuda", note:"Counter-only katsu, freshly fried in front of you: pork, chicken, wagyu, even veg katsu, plus tempura, with free rice and sauce refills and warm service. Rated ~4.9. Elodie saved all three branches, all within a few blocks of Kawaramachi (Shijo Kawaramachi, Sanjo Kawaramachi, Shijokarasuma).", tip:"All-counter seating; go off-peak to skip the queue. Try an egg on the curry.", price:"¥¥", addr:"Kyoto Tonkatsu Katsuda Shijo Kawaramachi, 330-2 Inaricho, Shimogyo Ward, Kyoto" },
+      { cat:"food", title:"をにわ Oniwa (Kawaramachi)", note:"A lively meat-focused izakaya 5 min from Kawaramachi Station with night-view seating and all-you-can-drink meat courses, fried chicken platters, meat-wrapped skewers, cheese meat kimbap. Good for a fun, casual night.", price:"¥¥", addr:"Oniwa Kawaramachi, Nakagyo Ward, Kyoto" },
+      { cat:"food", title:"Sonoba", note:"A craft gem: the owner is a soba craftsman who also makes pottery, serving 100% buckwheat juwari soba on flatware he throws in the ceramics studio next door. Michelin Bib Gourmand, monthly seasonal soba, praised saba-zushi and dashimaki. Soba + ceramics in one place, exactly your intersection. Compact and popular.", tip:"Go early to beat the lunch rush. You can buy the tableware.", price:"¥¥", addr:"sonoba, 533-3 Motoshiogamacho, Shimogyo Ward, Kyoto" },
+      { cat:"food", title:"Yamamoto Menzou (udon)", note:"A small, much-loved udon house near Kyoto Zoo (Okazaki), off the tourist track. Chewy, flavourful udon with standout burdock-root tempura and dishes like keiran (egg) udon and spicy miso meat noodle. Regularly called one of Kyoto's best udon spots.", tip:"Expect a queue; it's worth it. Pair with a Higashiyama/Okazaki day.", price:"¥¥", addr:"Yamamoto Menzou, 34 Okazaki Minamigoshocho, Sakyo Ward, Kyoto" },
+    ]},
+  { id:"osaka", name:"Osaka", kana:"大阪", dates:"Nov 25 – 27",
+    blurb:"Two nights, and the trip's eating-and-drinking capital. Your hotel (the Flag Shinsaibashi) sits in the thick of it, most of these are a short walk. Sourced from Elodie's list plus verification.",
+    items:[
+      { cat:"food", title:"Onigiri Gorichan", note:"A tiny counter making massive, made-to-order onigiri, 40+ fillings (salted salmon roe, soy-marinated egg yolk with minced meat, mentaiko), with a free ochazuke finish where you pour dashi over the leftovers. Beloved (4.9, 11k+ reviews). The branch Elodie pinned is in Minamisenba (Chuo), the one nearest your Shinsaibashi hotel.", tip:"Expect a wait at peak. Watch them make it fresh at the counter.", price:"¥", addr:"Onigiri Gorichan, Minamisenba, Chuo Ward, Osaka 34.6758595,135.5021961" },
+      { cat:"offbeat", title:"Bible Club Osaka", note:"A basement speakeasy in Shinsaibashi, sister to Bible Club Portland. 1920s-America décor, antique crystal, a vast American/Scotch whiskey list and reimagined classics with Japanese ingredients. Hard to find, that's the point (look for the plain wooden door, go down, push). ~¥800 cover, 6pm-1am.", tip:"Sit at the bar if you can. Reserve, it's small and popular.", price:"¥¥", addr:"Bible Club Osaka, B1F 2-1-11 Shinsaibashisuji, Chuo Ward, Osaka" },
+      { cat:"coffee", title:"LiLo Coffee Kissa", note:"A cosy specialty-coffee spot in Shinsaibashi with a retro kissaten feel, on Elodie's list and right by your hotel. The craft-coffee stop in Osaka.", price:"¥", addr:"LiLo Coffee Kissa, Shinsaibashi, Chuo Ward, Osaka" },
+      { cat:"food", title:"Takoyaki Wanaka Sennichimae", note:"One of Osaka's benchmark takoyaki stands, in the Sennichimae/Namba area near Dotonbori. Crisp-outside, molten-inside octopus balls, the street-food essential.", price:"¥", addr:"Takoyaki Wanaka Sennichimae, Namba, Chuo Ward, Osaka" },
+      { cat:"food", title:"Nagataya (okonomiyaki)", note:"A long-standing okonomiyaki spot from Elodie's list, in the Dotonbori/Namba orbit. Classic Osaka savoury pancake done properly.", price:"¥¥", addr:"Nagataya Okonomiyaki, Chuo Ward, Osaka" },
+      { cat:"food", title:"Rikuro's Namba (cheesecake)", note:"The famous jiggly Japanese cheesecake, baked fresh with a branded base, watch them come out of the oven wobbling. A cheap, iconic Osaka sweet near Namba.", price:"¥", addr:"Rikuro's Namba Main Store, 3-2-28 Namba, Chuo Ward, Osaka" },
+      { cat:"coffee", title:"The Roasters Coffee Shinsaibashi", note:"A specialty coffee spot in Shinsaibashi on Elodie's list, close to your hotel. Good third-wave option in the neighbourhood.", price:"¥", addr:"The Roasters Coffee Shinsaibashi, Chuo Ward, Osaka" },
+      { cat:"food", title:"Takoyaki Mahō-dako", note:"A well-regarded takoyaki stand in the Namba/Dotonbori area, crisp outside, molten inside. Cheap, fast, iconic Osaka street food to eat standing.", price:"¥", addr:"Takoyaki Maho-dako, Namba, Chuo Ward, Osaka" },
+      { cat:"food", title:"Gyoza no Fukuho", note:"A popular gyoza spot in the Dotonbori/Namba orbit, non-pungent Japan-grown garlic gyoza you can pack away with friends. Casual and cheap.", price:"¥", addr:"Gyoza no Fukuho, Dotonbori, Chuo Ward, Osaka" },
+    ]},
+];
+
+const DEFAULT_GENERAL = {
+  id:"general", name:"General", kana:"実用", dates:"Know before you go",
+  blurb:"The practical layer: money, transport, etiquette and timing, worked out for this specific trip.",
+  cats:[ {id:"all",label:"All"}, {id:"money",label:"Money"}, {id:"transport",label:"Transport"}, {id:"etiquette",label:"Etiquette"}, {id:"timing",label:"Timing"} ],
+  items:[
+    { cat:"money", title:"Tax-free changed Nov 1, 2026", note:"Your whole trip is on the NEW system: you pay full price (incl. 10% tax) in-store, then claim the refund at a Haneda kiosk before you fly out. Refund lands on your card 1–2 weeks later.", tip:"Keep every receipt. Keep your eSIM on at the airport (the kiosk needs internet). Do the refund BEFORE checking bags. Arrive early Dec 5; it's launch month, queues will be messy." },
+    { cat:"money", title:"Cash & Revolut", note:"You're carrying ~¥210k cash (exchanged at ~¥182). Japan is more card-friendly than its reputation, but konbini, small shops and shrines still want coins. Revolut for card spend at interbank rates.", tip:"Alert set at ¥185/€ for topping up the yen wallet if the rate moves your way." },
+    { cat:"transport", title:"No JR Pass: individual tickets", note:"You did the math: point-to-point tickets (~€270 est.) beat the Pass for this route. An IC card (Suica/Pasmo) covers local trains, metro, buses and even konbini taps." },
+    { cat:"transport", title:"Takuhaibin luggage forwarding", note:"Yamato ships your big bag hotel-to-hotel for ~€8–16. Essential on the Gifu knife-forging day (Nov 28): send the 100L from Nagoya to Kamakura the day before, travel with just the 32L backpack.", tip:"Hotels handle this at the front desk. Send the day before you move." },
+    { cat:"transport", title:"Shinkansen oversized bag rule", note:"Your packed 100L hits 164cm total, just over the 160cm threshold that technically needs a reserved oversized-baggage seat. Mostly moot since you're forwarding it, but reserve the (free) space on any leg you carry it." },
+    { cat:"etiquette", title:"Reading the room", note:"Quiet on trains, no eating while walking, cash in the tray not the hand, shoes off where it's tatami. Tattoos can bar you from some onsen and gyms; cover or check ahead." },
+    { cat:"etiquette", title:"Gyms while travelling", note:"Anytime Fitness is everywhere and the most foreigner-friendly (your global fob may work). Chocozap is the cheap convenience-gym option: ¥2,980/month, 1,800+ 24-hour branches, no dress code. Municipal ward gyms are ¥300–600 drop-in but often ban visible tattoos and require separate clean indoor shoes.", tip:"Pack a light second pair of trainers if you plan to lift, or you'll be turned away without them.", body:"<p><strong>Anytime Fitness Japan</strong> runs a dedicated international-members page: check whether your home-club fob gives reciprocal access before you go. Most foreigner-friendly of the options.<br><a href='https://www.anytimefitness.co.jp/international/' target='_blank' rel='noopener'>anytimefitness.co.jp/international</a></p><p><strong>Chocozap</strong> (choco ZAP, owned by RIZAP) is the ultra-cheap convenience-gym chain: ¥2,980/month (¥3,278 incl. tax), 1,800+ locations, most open 24h, no dress code and no need to change shoes. Great for a quick session, though it's membership-based and the app is Japanese-first.<br><a href='https://chocozap.jp/' target='_blank' rel='noopener'>chocozap.jp</a></p><p><strong>Municipal ward gyms</strong> are the pay-as-you-go option (¥300–600 per entry) but often ban visible tattoos and require separate clean indoor shoes.</p>" },
+    { cat:"timing", title:"Foliage & crowds", note:"El Niño pushed peak Kyoto colour to ~Nov 29–Dec 3, you'll catch it building. Nov 23 is a bank holiday (avoid Kinkaku-ji / Arashiyama that day). Kamakura's beach town is quietest midweek." },
+  ]
+};
+
+const STAYS = {
+  tokyo: [
+    { dates:"Nov 17–21", hotel:"Tokyu Stay Meguro Yutenji", addr:"Yutenji, Meguro City, Tokyo" },
+    { dates:"Dec 2–5", hotel:"Hotel Resol Stay Akihabara", addr:"Sotokanda, Chiyoda City, Tokyo" },
+  ],
+  kamakura: [
+    { dates:"Nov 28 – Dec 2", hotel:"WeBase Kamakura", addr:"Yuigahama, Kamakura, Kanagawa" },
+  ],
+};
+
+const HERO_COLORS = {
+  food:"linear-gradient(135deg,#F79009,#DC6803)", coffee:"linear-gradient(135deg,#A78355,#7A5230)",
+  craft:"linear-gradient(135deg,#12B76A,#085D3A)", offbeat:"linear-gradient(135deg,#875BF7,#5925DC)",
+  daytrip:"linear-gradient(135deg,#53B1FD,#175CD3)", money:"linear-gradient(135deg,#7A88F7,#4338CA)",
+  transport:"linear-gradient(135deg,#7A88F7,#4338CA)", etiquette:"linear-gradient(135deg,#7A88F7,#4338CA)",
+  timing:"linear-gradient(135deg,#7A88F7,#4338CA)", default:"linear-gradient(135deg,#7A88F7,#4338CA)",
+};
+const CITY_FALLBACK = "linear-gradient(135deg,#4F46E5,#7A5AF8)";
+
+function resizeImageFile(file, maxW, quality) {
+  maxW = maxW || 900; quality = quality || 0.82;
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxW / img.width);
+        const w = Math.round(img.width*scale), hgt = Math.round(img.height*scale);
+        const canvas = document.createElement("canvas");
+        canvas.width = w; canvas.height = hgt;
+        canvas.getContext("2d").drawImage(img, 0, 0, w, hgt);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.onerror = reject; img.src = e.target.result;
+    };
+    reader.onerror = reject; reader.readAsDataURL(file);
+  });
+}
+function fileFromDrop(e) {
+  const dt = e.dataTransfer;
+  if (!dt || !dt.files || !dt.files.length) return null;
+  const f = dt.files[0];
+  return f && f.type && f.type.indexOf("image")===0 ? f : null;
+}
+function useImageDrag(posY, onPos) {
+  const [dragging, setDragging] = useState(false);
+  const ref = useRef({ y:0, p:0, h:1 });
+  const boxRef = useRef(null);
+  function onPointerDown(e) {
+    const r = boxRef.current.getBoundingClientRect();
+    ref.current = { y:e.clientY, p:posY, h:r.height||1 };
+    setDragging(true);
+    e.target.setPointerCapture && e.target.setPointerCapture(e.pointerId);
+  }
+  function onPointerMove(e) {
+    if (!dragging) return;
+    const d = ((e.clientY - ref.current.y)/ref.current.h)*100;
+    let n = ref.current.p - d; n = Math.max(0, Math.min(100, n));
+    onPos(Math.round(n));
+  }
+  function onPointerUp() { setDragging(false); }
+  return { dragging, boxRef, onPointerDown, onPointerMove, onPointerUp };
+}
+
+function Editable({ tag, className, value, onSave, placeholder }) {
+  return h(tag, {
+    className:(className||"")+" editable", contentEditable:true, suppressContentEditableWarning:true,
+    onClick:(e)=>e.stopPropagation(),
+    onBlur:(e)=>{ const v=e.target.innerText.trim(); if (v!==value) onSave(v); },
+    "data-placeholder":placeholder||"",
+  }, value);
+}
+
+// Cover used on item detail + city header. maxW high for sharpness.
+function Cover({ img, posY, onSetImg, onSetPos }) {
+  const py = posY!=null ? posY : 50;
+  const drag = useImageDrag(py, onSetPos);
+  const [over, setOver] = useState(false);
+  function set(file){ if(file) resizeImageFile(file,1600,0.85).then(onSetImg); }
+  function onDrop(e){ e.preventDefault(); e.stopPropagation(); setOver(false); set(fileFromDrop(e)); }
+  if (!img) {
+    return h("div", { className:"cover-empty" },
+      h("label", { className:"cover-empty-inner"+(over?" dragover":""),
+        onDragOver:(e)=>{e.preventDefault();setOver(true);}, onDragLeave:()=>setOver(false), onDrop },
+        "Drop a photo here, or click to add a cover",
+        h("input", { type:"file", accept:"image/*", onChange:(e)=>set(e.target.files&&e.target.files[0]) })
+      )
+    );
+  }
+  return h("div", {
+      className:"cover"+(drag.dragging?" dragging":""), ref:drag.boxRef,
+      style:{ backgroundImage:'url("'+img+'")', backgroundPosition:"center "+py+"%" },
+      onPointerDown:drag.onPointerDown, onPointerMove:drag.onPointerMove, onPointerUp:drag.onPointerUp, onPointerLeave:drag.onPointerUp,
+      onDragOver:(e)=>{e.preventDefault();setOver(true);}, onDragLeave:()=>setOver(false), onDrop },
+    h("div", { className:"cover-controls" },
+      h("label", { className:"cover-btn", onPointerDown:(e)=>e.stopPropagation() },
+        "Change photo",
+        h("input", { type:"file", accept:"image/*", onChange:(e)=>set(e.target.files&&e.target.files[0]) })
+      )
+    ),
+    h("div", { className:"cover-hint" }, drag.dragging ? "Drop to set position" : "Drag to reposition · drop a new photo to replace")
+  );
+}
+
+function RichNotes({ item, onUpdate }) {
+  const hostRef = useRef(null);
+  const quillRef = useRef(null);
+  const [over, setOver] = useState(false);
+  useEffect(() => {
+    if (!hostRef.current || quillRef.current) return;
+    const q = new window.Quill(hostRef.current, {
+      theme:"bubble", placeholder:"Write anything here. Drop a photo in anytime.",
+      modules:{ toolbar:["bold","italic","underline","link"] },
+    });
+    const seed = item.body!=null ? item.body
+      : ((item.note?"<p>"+item.note+"</p>":"")+(item.tip?"<p><strong>Tip:</strong> "+item.tip+"</p>":""));
+    if (seed) q.root.innerHTML = seed;
+    q.on("text-change", ()=>onUpdate("body", q.root.innerHTML));
+    quillRef.current = q;
+  }, []);
+  function onDrop(e){
+    e.preventDefault(); e.stopPropagation(); setOver(false);
+    const f = fileFromDrop(e); if (!f || !quillRef.current) return;
+    const r = quillRef.current.getSelection(true) || { index: quillRef.current.getLength() };
+    resizeImageFile(f,1000,0.8).then((d)=>{ quillRef.current.insertEmbed(r.index,"image",d,"user"); quillRef.current.setSelection(r.index+1); });
+  }
+  return h("div", { className:"detail-notes" },
+    h("div", { className:"notes-drop"+(over?" dragover":""),
+      onDragOver:(e)=>{e.preventDefault();setOver(true);}, onDragLeave:()=>setOver(false), onDrop },
+      h("div", { ref:hostRef })
+    ),
+    h("div", { className:"notes-hint" }, "Select text to format it. Drop a photo anywhere in this column to add it.")
+  );
+}
+
+function ModalCover({ img, posY, onSetImg, onSetPos }) {
+  const py = posY!=null ? posY : 50;
+  const drag = useImageDrag(py, onSetPos);
+  const [over, setOver] = useState(false);
+  function set(file){ if(file) resizeImageFile(file,1600,0.85).then(onSetImg); }
+  function onDrop(e){ e.preventDefault(); e.stopPropagation(); setOver(false); set(fileFromDrop(e)); }
+  if (!img) {
+    return h("label", { className:"modal-cover-empty"+(over?" dragover":""),
+      onDragOver:(e)=>{e.preventDefault();setOver(true);}, onDragLeave:()=>setOver(false), onDrop },
+      "Drop a photo here, or click to add a cover",
+      h("input", { type:"file", accept:"image/*", onChange:(e)=>set(e.target.files&&e.target.files[0]) })
+    );
+  }
+  return h("div", { className:"modal-cover"+(drag.dragging?" dragging":""), ref:drag.boxRef,
+      style:{ backgroundImage:'url("'+img+'")', backgroundPosition:"center "+py+"%" },
+      onPointerDown:drag.onPointerDown, onPointerMove:drag.onPointerMove, onPointerUp:drag.onPointerUp, onPointerLeave:drag.onPointerUp,
+      onDragOver:(e)=>{e.preventDefault();setOver(true);}, onDragLeave:()=>setOver(false), onDrop },
+    h("div", { className:"cover-controls" },
+      h("label", { className:"cover-btn", onPointerDown:(e)=>e.stopPropagation() },
+        "Change photo", h("input", { type:"file", accept:"image/*", onChange:(e)=>set(e.target.files&&e.target.files[0]) })
+      )
+    ),
+    h("div", { className:"cover-hint" }, drag.dragging ? "Drop to set position" : "Drag to reposition")
+  );
+}
+
+function ModalNotes({ item, onUpdate }) {
+  const hostRef = useRef(null);
+  const quillRef = useRef(null);
+  const [over, setOver] = useState(false);
+  useEffect(() => {
+    if (!hostRef.current || quillRef.current) return;
+    const q = new window.Quill(hostRef.current, {
+      theme:"bubble", placeholder:"Write anything here. Drop a photo in anytime.",
+      modules:{ toolbar:["bold","italic","underline","link"] },
+    });
+    const seed = item.body!=null ? item.body
+      : ((item.note?"<p>"+item.note+"</p>":"")+(item.tip?"<p><strong>Tip:</strong> "+item.tip+"</p>":""));
+    if (seed) q.root.innerHTML = seed;
+    q.on("text-change", ()=>onUpdate("body", q.root.innerHTML));
+    quillRef.current = q;
+  }, []);
+  function onDrop(e){
+    e.preventDefault(); e.stopPropagation(); setOver(false);
+    const f = fileFromDrop(e); if (!f || !quillRef.current) return;
+    const r = quillRef.current.getSelection(true) || { index: quillRef.current.getLength() };
+    resizeImageFile(f,1000,0.8).then((d)=>{ quillRef.current.insertEmbed(r.index,"image",d,"user"); quillRef.current.setSelection(r.index+1); });
+  }
+  return h("div", { className:"modal-notes" },
+    h("div", { className:"modal-notes-drop"+(over?" dragover":""),
+      onDragOver:(e)=>{e.preventDefault();setOver(true);}, onDragLeave:()=>setOver(false), onDrop },
+      h("div", { ref:hostRef })
+    ),
+    h("div", { className:"modal-notes-hint" }, "Select text to format it. Drop a photo anywhere in this column to add it.")
+  );
+}
+
+function ItemModal({ item, catLabel, onUpdate, onClose, onDelete }) {
+  const t = useRef(null);
+  const maps = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(item.addr || item.title);
+  const mapEmbed = "https://maps.google.com/maps?q=" + encodeURIComponent(item.addr || item.title) + "&z=15&output=embed";
+  function up(field, val){ onUpdate(field, val); }
+  useEffect(()=>{
+    function onKey(e){ if(e.key==="Escape") onClose(); }
+    document.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return ()=>{ document.removeEventListener("keydown", onKey); document.body.style.overflow = ""; };
+  }, []);
+  return h("div", { className:"modal-backdrop", onClick:onClose },
+    h("div", { className:"modal", onClick:(e)=>e.stopPropagation() },
+      h("div", { className:"modal-sheet-handle" }),
+      h("button", { className:"modal-del", onClick:()=>{ if(window.confirm('Delete "'+item.title+'"?')) onDelete(); } }, "Delete"),
+      h("button", { className:"modal-close", onClick:onClose }, "\u2715"),
+      h(ModalCover, { img:item.img, posY:item.imgPosY, onSetImg:(d)=>up("img",d), onSetPos:(v)=>up("imgPosY",v) }),
+      h("div", { className:"modal-body" },
+        h("div", { className:"modal-main" },
+          h("span", { className:"modal-cat-pill" }, catLabel || item.cat),
+          h(Editable, { tag:"h1", className:"modal-title", value:item.title, onSave:(v)=>up("title",v) }),
+          h(ModalNotes, { item, onUpdate:up })
+        ),
+        h("aside", { className:"facts" },
+          h("div", { className:"fact" },
+            h("div", { className:"fact-label" }, "Address"),
+            h(Editable, { tag:"div", className:"fact-val", value:item.addr||"", onSave:(v)=>up("addr",v), placeholder:"Add an address" }),
+            h("a", { className:"fact-link", href:maps, target:"_blank", rel:"noopener noreferrer" }, "Open in Maps \u2192")
+          ),
+          h("div", { className:"fact" },
+            h("div", { className:"fact-label" }, "Nearest station"),
+            h(Editable, { tag:"div", className:"fact-val", value:item.metro||"", onSave:(v)=>up("metro",v), placeholder:"Add a metro/train station" })
+          ),
+          h("div", { className:"fact" },
+            h("div", { className:"fact-label" }, "Type"),
+            h(Editable, { tag:"div", className:"fact-val", value:item.cuisine||"", onSave:(v)=>up("cuisine",v), placeholder:"Cuisine / type" })
+          ),
+          h("div", { className:"fact" },
+            h("div", { className:"fact-label" }, "Price"),
+            h(Editable, { tag:"div", className:"fact-val", value:item.price||"", onSave:(v)=>up("price",v), placeholder:"e.g. \u00a5\u00a5" })
+          ),
+          h("div", { className:"fact" },
+            h("div", { className:"fact-label" }, "Hours / open"),
+            h(Editable, { tag:"div", className:"fact-val", value:item.hours||"", onSave:(v)=>up("hours",v), placeholder:"e.g. 11:00-22:00, closed Tue" })
+          ),
+          h("div", { className:"fact" },
+            h("div", { className:"fact-label" }, "Website"),
+            h(Editable, { tag:"div", className:"fact-val", value:item.website||"", onSave:(v)=>up("website",v), placeholder:"Add a website URL" }),
+            item.website ? h("a", { className:"fact-link", href:(item.website.indexOf("http")===0?item.website:"https://"+item.website), target:"_blank", rel:"noopener noreferrer" }, "Visit site \u2192") : null
+          ),
+          h("div", { className:"fact" },
+            h("div", { className:"fact-label" }, "Tip"),
+            h("div", { className:"fact-tip" },
+              h(Editable, { tag:"div", className:"fact-val", value:item.tip||"", onSave:(v)=>up("tip",v), placeholder:"Add a tip" })
+            )
+          ),
+          h("div", { className:"fact" },
+            h("div", { className:"fact-label" }, "Map"),
+            h("div", { className:"fact-map" },
+              h("iframe", { src:mapEmbed, loading:"lazy", referrerPolicy:"no-referrer-when-downgrade", title:"map" })
+            )
+          )
+        )
+      )
+    )
+  );
+}
+
+function catInfo(cats, id) {
+  const c = cats && cats.find(x=>x.id===id);
+  if (c) return { label: c.label, color: c.color || null };
+  return { label: id, color: null };
+}
+function PlaceCard({ item, cats, onOpen }) {
+  const py = item.imgPosY!=null ? item.imgPosY : 50;
+  const info = catInfo(cats, item.cat);
+  const style = item.img
+    ? { backgroundImage:'url("'+item.img+'")', backgroundPosition:"center "+py+"%" }
+    : { background: HERO_COLORS[item.cat] || HERO_COLORS.default };
+  const pillProps = info.color
+    ? { className:"pcard-cat", style:{ background: info.color+"22", color: info.color } }
+    : { className:"pcard-cat cat-"+item.cat };
+  return h("div", { className:"pcard", onClick:onOpen },
+    h("div", { className:"pcard-cover", style }),
+    h("div", { className:"pcard-body" },
+      h("div", { className:"pcard-top" },
+        h("span", { className:"pcard-title" }, item.title),
+        item.price ? h("span", { className:"pcard-price" }, item.price) : null,
+        h("span", pillProps, info.label)
+      ),
+      h("p", { className:"pcard-note" }, item.note)
+    )
+  );
+}
+
+function AddItemForm({ cats, onSave, onCancel }) {
+  const [f, setF] = useState({ title:"", cat:cats.find(c=>c.id!=="all") ? cats.find(c=>c.id!=="all").id : "offbeat", note:"" });
+  const set = (k)=>(e)=>setF({ ...f, [k]:e.target.value });
+  return h("div", { className:"form" },
+    h("input", { placeholder:"Title", value:f.title, onChange:set("title") }),
+    h("select", { value:f.cat, onChange:set("cat") }, cats.filter(c=>c.id!=="all").map(c=>h("option",{key:c.id,value:c.id},c.label))),
+    h("textarea", { placeholder:"Short description", rows:2, value:f.note, onChange:set("note") }),
+    h("div", { className:"form-row" },
+      h("button", { className:"btn-ghost", onClick:onCancel }, "Cancel"),
+      h("button", { className:"btn-primary", onClick:()=>{ if(!f.title.trim()) return; onSave({ cat:f.cat, title:f.title.trim(), note:f.note.trim()||"Tell me more about this place..." }); } }, "Add")
+    )
+  );
+}
+
+function CatEditor({ cats, onSave, onClose }) {
+  const editable = cats.filter(c=>c.id!=="all");
+  const [rows, setRows] = useState(editable.map(c=>({ ...c, color: c.color || "#4F46E5" })));
+  function setRow(i, k, v){ const n=rows.slice(); n[i]={...n[i],[k]:v}; setRows(n); }
+  function del(i){ setRows(rows.filter((_,j)=>j!==i)); }
+  function add(){ setRows([...rows, { id:"cat-"+Date.now().toString(36), label:"New category", color:"#98A2B3" }]); }
+  function save(){
+    const cleaned = rows.filter(r=>r.label.trim()).map(r=>({ id:r.id, label:r.label.trim(), color:r.color }));
+    onSave([{ id:"all", label:"All" }, ...cleaned]);
+    onClose();
+  }
+  return h("div", { className:"cat-editor" },
+    rows.map((r,i)=>h("div",{className:"cat-editor-row",key:r.id},
+      h("input",{ type:"color", value:r.color, onChange:(e)=>setRow(i,"color",e.target.value) }),
+      h("input",{ value:r.label, onChange:(e)=>setRow(i,"label",e.target.value) }),
+      h("button",{ className:"cat-editor-del", onClick:()=>del(i), title:"Remove" }, "\\u2715")
+    )),
+    h("button",{ className:"cat-editor-add", onClick:add }, "+ Add category"),
+    h("div",{ className:"form-row", style:{marginTop:"10px"} },
+      h("button",{ className:"btn-ghost", onClick:onClose }, "Cancel"),
+      h("button",{ className:"btn-primary", onClick:save }, "Save categories")
+    )
+  );
+}
+
+function CityPage({ node, cats, stays, onBack, onHome, onOpenItem, onUpdateItem, onDeleteItem, onAddItem, onUpdateNode, onUpdateCats }) {
+  const [tab, setTab] = useState("all");
+  const [adding, setAdding] = useState(false);
+  const [editingCats, setEditingCats] = useState(false);
+  const [flash, setFlash] = useState(false);
+  const t = useRef(null);
+  const list = useMemo(()=>cats.filter(c=>c.id==="all"||node.items.some(i=>i.cat===c.id)), [cats,node]);
+  const shown = tab==="all" ? node.items : node.items.filter(i=>i.cat===tab);
+  function up(field,val){ onUpdateNode(field,val); setFlash(true); clearTimeout(t.current); t.current=setTimeout(()=>setFlash(false),1400); }
+  return h("div", { className:"city" },
+    h("div", { className:"topbar" },
+      h("button", { className:"brand", onClick:onHome }, h("span",{className:"brand-jp"},"旅"), h("span",{className:"brand-name"},"Japan Guide")),
+      h("div", { className:"topbar-right" },
+        h("button", { className:"topbar-back", onClick:onBack }, "← All destinations"),
+        h("span", { className:"topbar-saved"+(flash?" show":"") }, "✓ Saved")
+      )
+    ),
+    h(Cover, { img:node.img, posY:node.imgPosY, onSetImg:(d)=>up("img",d), onSetPos:(v)=>up("imgPosY",v) }),
+    h("div", { className:"city-body" },
+      h("div", { className:"city-head" },
+        h(Editable, { tag:"h1", className:"city-name", value:node.name, onSave:(v)=>up("name",v) }),
+        h("div", { className:"city-name-jp" }, node.kana),
+        h("div", { className:"city-dates" }, node.dates),
+        h(Editable, { tag:"div", className:"city-blurb", value:node.blurb, onSave:(v)=>up("blurb",v), placeholder:"Add a description for this destination..." })
+      ),
+      stays && stays.length ? h("div", { className:"stays" },
+        stays.map((s,i)=>h("div",{className:"stay",key:i},
+          h("div",null, h("div",{className:"stay-hotel"},s.hotel), h("div",{className:"stay-dates"},s.dates+" · "+s.addr)),
+          h("a",{className:"stay-link",href:"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(s.addr),target:"_blank",rel:"noopener noreferrer"},"Maps →")
+        ))
+      ) : null,
+      h("div", { className:"tabs" },
+        list.map(c=>h("button",{key:c.id,className:"tab"+(tab===c.id?" active":""),onClick:()=>setTab(c.id)},c.label)),
+        onUpdateCats ? h("span",{className:"cat-manage"},
+          h("button",{className:"cat-edit-btn",onClick:()=>setEditingCats(!editingCats)}, editingCats?"Done":"Edit categories")
+        ) : null
+      ),
+      editingCats && onUpdateCats ? h(CatEditor,{ cats, onSave:onUpdateCats, onClose:()=>setEditingCats(false) }) : null,
+      h("div", { className:"places" },
+        shown.map((item,i)=>h(PlaceCard,{ key:item.id||i, item, cats, onOpen:()=>onOpenItem(item.id) })),
+        !adding ? h("button",{className:"add-place",onClick:()=>setAdding(true)},"+ Add a place")
+          : h(AddItemForm,{ cats, onCancel:()=>setAdding(false), onSave:(n)=>{ onAddItem(n); setAdding(false); } })
+      )
+    )
+  );
+}
+
+function AddCityForm({ onSave, onCancel }) {
+  const [f, setF] = useState({ name:"", kana:"", dates:"" });
+  const set = (k)=>(e)=>setF({ ...f, [k]:e.target.value });
+  return h("div", { className:"dcard dcard-new", style:{ display:"block", padding:"18px", cursor:"default" } },
+    h("div", { className:"form", style:{ border:"none", padding:0 } },
+      h("input", { placeholder:"Destination name, e.g. Kyoto", value:f.name, onChange:set("name") }),
+      h("input", { placeholder:"Japanese name (optional)", value:f.kana, onChange:set("kana") }),
+      h("input", { placeholder:"Dates, e.g. Nov 21–25", value:f.dates, onChange:set("dates") }),
+      h("div", { className:"form-row" },
+        h("button", { className:"btn-ghost", onClick:onCancel }, "Cancel"),
+        h("button", { className:"btn-primary", onClick:()=>{ if(!f.name.trim()) return; onSave({ id:genId(), name:f.name.trim(), kana:f.kana.trim()||f.name.trim(), dates:f.dates.trim()||"Dates TBC", blurb:"", items:[] }); } }, "Create")
+      )
+    )
+  );
+}
+
+function DestCard({ node, count, countLabel, onOpen }) {
+  const py = node.imgPosY!=null ? node.imgPosY : 50;
+  return h("div", { className:"dcard", onClick:onOpen },
+    node.img
+      ? h("div", { className:"dcard-cover", style:{ backgroundImage:'url("'+node.img+'")', backgroundPosition:"center "+py+"%" } })
+      : h("div", { className:"dcard-cover-fallback", style:{ background:CITY_FALLBACK } }, h("div",{className:"dcard-kana"},node.kana)),
+    h("div", { className:"dcard-body" },
+      h("div", { className:"dcard-name" }, node.name),
+      h("div", { className:"dcard-dates" }, node.dates),
+      h("div", { className:"dcard-desc" }, node.blurb || "No description yet."),
+      h("div", { className:"dcard-count" }, count+" "+countLabel+" →")
+    )
+  );
+}
+
+function Home({ cities, general, onOpen, onAddCity }) {
+  const [adding, setAdding] = useState(false);
+  const totalPicks = cities.reduce((n,c)=>n+c.items.length,0);
+  return h("div", null,
+    h("div", { className:"topbar" },
+      h("div", { className:"brand" }, h("span",{className:"brand-jp"},"旅"), h("span",{className:"brand-name"},"Japan Guide"))
+    ),
+    h("div", { className:"home" },
+      h("div", { className:"home-hero" },
+        h("div", { className:"home-eyebrow" }, "日本 2026"),
+        h("div", { className:"home-title" }, "Field guide"),
+        h("div", { className:"home-sub" }, "A solo trip from Paris, 16 November to 5 December. Curated picks per city plus a practical layer, all editable and yours to shape."),
+        h("div", { className:"home-meta" },
+          h("div", null, h("div",{className:"home-stat-num"},"19"), h("div",{className:"home-stat-label"},"days")),
+          h("div", null, h("div",{className:"home-stat-num"},cities.length), h("div",{className:"home-stat-label"},"destinations")),
+          h("div", null, h("div",{className:"home-stat-num"},totalPicks), h("div",{className:"home-stat-label"},"picks"))
+        )
+      ),
+      h("div", { className:"grid" },
+        cities.map(c=>h(DestCard,{ key:c.id, node:c, count:c.items.length, countLabel:"picks", onOpen:()=>onOpen(c.id) })),
+        h(DestCard,{ key:"general", node:general, count:general.items.length, countLabel:"notes", onOpen:()=>onOpen("general") }),
+        !adding ? h("div",{key:"new",className:"dcard dcard-new",onClick:()=>setAdding(true)},"+ New destination")
+          : h(AddCityForm,{ key:"newform", onCancel:()=>setAdding(false), onSave:(city)=>{ onAddCity(city); setAdding(false); } })
+      )
+    )
+  );
+}
+
+function loadInitialData() {
+  try { const s = localStorage.getItem(STORAGE_KEY); if (s) return ensureIds(JSON.parse(s)); } catch(e){}
+  return ensureIds(JSON.parse(JSON.stringify({ cities: DEFAULT_CITIES, general: DEFAULT_GENERAL })));
+}
+
+function App() {
+  const [data, setData] = useState(loadInitialData);
+  const [active, setActive] = useState("home");
+  const [itemId, setItemId] = useState(null);
+  useEffect(()=>{ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }catch(e){} }, [data]);
+
+  const isGeneral = active==="general";
+  const node = data.cities.find(c=>c.id===active) || (isGeneral ? data.general : null);
+  const item = (node && itemId) ? node.items.find(i=>i.id===itemId) : null;
+
+  function updateItem(it, field, val){ setData(p=>{ const n=JSON.parse(JSON.stringify(p)); const t=isGeneral?n.general:n.cities.find(c=>c.id===active); const idx=t.items.findIndex(x=>x.id===it.id); if(idx>-1) t.items[idx]={...t.items[idx],[field]:val}; return n; }); }
+  function deleteItem(it){ setData(p=>{ const n=JSON.parse(JSON.stringify(p)); const t=isGeneral?n.general:n.cities.find(c=>c.id===active); t.items=t.items.filter(x=>x.id!==it.id); return n; }); if(itemId===it.id) setItemId(null); }
+  function addItem(ni){ ni.id=genId(); setData(p=>{ const n=JSON.parse(JSON.stringify(p)); const t=isGeneral?n.general:n.cities.find(c=>c.id===active); t.items.push(ni); return n; }); }
+  function updateNode(field,val){ setData(p=>{ const n=JSON.parse(JSON.stringify(p)); if(isGeneral){ n.general[field]=val; return n; } const t=n.cities.find(c=>c.id===active); if(t) t[field]=val; return n; }); }
+  function addCity(city){ setData(p=>{ const n=JSON.parse(JSON.stringify(p)); n.cities.push(city); return n; }); }
+  function updateCats(cats){ setData(p=>{ const n=JSON.parse(JSON.stringify(p)); n.categories = cats; return n; }); }
+
+  const activeCats = isGeneral ? data.general.cats : (data.categories || CATS);
+  const catLabel = item ? (function(){ const c = activeCats.find(x=>x.id===item.cat); return c ? c.label : item.cat; })() : null;
+
+  if (node) return h("div",{className:"app"},
+    h(CityPage,{ node, cats:activeCats, stays:STAYS[node.id], onBack:()=>setActive("home"), onHome:()=>setActive("home"), onOpenItem:setItemId, onUpdateItem:updateItem, onDeleteItem:deleteItem, onAddItem:addItem, onUpdateNode:updateNode, onUpdateCats:updateCats }),
+    item ? h(ItemModal,{ item, catLabel, onUpdate:(f,v)=>updateItem(item,f,v), onClose:()=>setItemId(null), onDelete:()=>deleteItem(item) }) : null
+  );
+  return h("div",{className:"app"}, h(Home,{ cities:data.cities, general:data.general, onOpen:setActive, onAddCity:addCity }));
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(h(App));
+</script>
+</body>
+</html>
