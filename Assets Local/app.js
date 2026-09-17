@@ -317,7 +317,7 @@ function CatEditor({ cats, onSave, onClose }) {
   );
 }
 
-function CityPage({ node, cats, stays, onBack, onHome, onOpenItem, onUpdateItem, onDeleteItem, onAddItem, onUpdateNode, onUpdateCats, onExport, onImportClick }) {
+function CityPage({ node, cats, stays, onBack, onHome, onOpenItem, onUpdateItem, onDeleteItem, onAddItem, onUpdateNode, onUpdateCats }) {
   const [tab, setTab] = useState("all");
   const [adding, setAdding] = useState(false);
   const [editingCats, setEditingCats] = useState(false);
@@ -328,12 +328,10 @@ function CityPage({ node, cats, stays, onBack, onHome, onOpenItem, onUpdateItem,
   function up(field,val){ onUpdateNode(field,val); setFlash(true); clearTimeout(t.current); t.current=setTimeout(()=>setFlash(false),1400); }
   return h("div", { className:"city" },
     h("div", { className:"topbar" },
-      h("button", { className:"brand", onClick:onHome }, h("span",{className:"brand-jp"},"旅"), h("span",{className:"brand-name"},"Japan Guide")),
+      h("button", { className:"brand", onClick:onHome }, h("img",{ className:"brand-logo", src:"taberu.svg", alt:"Taberu" })),
       h("div", { className:"topbar-right" },
         h("button", { className:"topbar-back", onClick:onBack }, "← All destinations"),
-        h("span", { className:"topbar-saved"+(flash?" show":"") }, "✓ Saved"),
-        onExport ? h("button", { className:"topbar-io", onClick:onExport }, "Export") : null,
-        onImportClick ? h("button", { className:"topbar-io", onClick:onImportClick }, "Import") : null
+        h("span", { className:"topbar-saved"+(flash?" show":"") }, "✓ Saved")
       )
     ),
     h(Cover, { img:node.img, posY:node.imgPosY, onSetImg:(d)=>up("img",d), onSetPos:(v)=>up("imgPosY",v) }),
@@ -397,16 +395,12 @@ function DestCard({ node, count, countLabel, onOpen }) {
   );
 }
 
-function Home({ cities, general, onOpen, onAddCity, onExport, onImportClick }) {
+function Home({ cities, general, onOpen, onAddCity }) {
   const [adding, setAdding] = useState(false);
   const totalPicks = cities.reduce((n,c)=>n+c.items.length,0);
   return h("div", null,
     h("div", { className:"topbar" },
-      h("div", { className:"brand" }, h("span",{className:"brand-jp"},"旅"), h("span",{className:"brand-name"},"Japan Guide")),
-      h("div", { className:"topbar-right" },
-        onExport ? h("button", { className:"topbar-io", onClick:onExport }, "Export") : null,
-        onImportClick ? h("button", { className:"topbar-io", onClick:onImportClick }, "Import") : null
-      )
+      h("div", { className:"brand" }, h("img",{ className:"brand-logo", src:"taberu.svg", alt:"Taberu" }))
     ),
     h("div", { className:"home" },
       h("div", { className:"home-hero" },
@@ -434,49 +428,11 @@ function loadInitialData() {
   return ensureIds(JSON.parse(JSON.stringify({ cities: DEFAULT_CITIES, general: DEFAULT_GENERAL })));
 }
 
-function exportData(data) {
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type:"application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  const stamp = new Date().toISOString().slice(0,10);
-  a.href = url;
-  a.download = "japan-guide-backup-" + stamp + ".json";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-
 function App() {
   const [data, setData] = useState(loadInitialData);
   const [active, setActive] = useState("home");
   const [itemId, setItemId] = useState(null);
-  const fileInputRef = useRef(null);
   useEffect(()=>{ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }catch(e){} }, [data]);
-
-  function doExport(){ exportData(data); }
-  function doImportClick(){ if (fileInputRef.current) fileInputRef.current.click(); }
-  function handleImportFile(e){
-    const file = e.target.files && e.target.files[0];
-    e.target.value = "";
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      let parsed;
-      try { parsed = JSON.parse(reader.result); }
-      catch(err) { alert("That file isn't valid JSON. Nothing was changed."); return; }
-      if (!parsed || !Array.isArray(parsed.cities) || !parsed.general) {
-        alert("That file doesn't look like a Japan Guide backup (missing cities/general). Nothing was changed.");
-        return;
-      }
-      if (!confirm("Import this file? It will replace everything currently in the guide (your current data stays in place until you confirm).")) return;
-      try { setData(ensureIds(parsed)); alert("Import complete."); }
-      catch(err) { alert("Import failed: " + err.message); }
-    };
-    reader.onerror = () => alert("Couldn't read that file.");
-    reader.readAsText(file);
-  }
-  const fileInput = h("input", { type:"file", accept:"application/json,.json", ref:fileInputRef, onChange:handleImportFile });
 
   const isGeneral = active==="general";
   const node = data.cities.find(c=>c.id===active) || (isGeneral ? data.general : null);
@@ -493,13 +449,11 @@ function App() {
   const catLabel = item ? (function(){ const c = activeCats.find(x=>x.id===item.cat); return c ? c.label : item.cat; })() : null;
 
   if (node) return h("div",{className:"app"},
-    fileInput,
-    h(CityPage,{ node, cats:activeCats, stays:STAYS[node.id], onBack:()=>setActive("home"), onHome:()=>setActive("home"), onOpenItem:setItemId, onUpdateItem:updateItem, onDeleteItem:deleteItem, onAddItem:addItem, onUpdateNode:updateNode, onUpdateCats:updateCats, onExport:doExport, onImportClick:doImportClick }),
+    h(CityPage,{ node, cats:activeCats, stays:STAYS[node.id], onBack:()=>setActive("home"), onHome:()=>setActive("home"), onOpenItem:setItemId, onUpdateItem:updateItem, onDeleteItem:deleteItem, onAddItem:addItem, onUpdateNode:updateNode, onUpdateCats:updateCats }),
     item ? h(ItemModal,{ item, catLabel, onUpdate:(f,v)=>updateItem(item,f,v), onClose:()=>setItemId(null), onDelete:()=>deleteItem(item) }) : null
   );
   return h("div",{className:"app"},
-    fileInput,
-    h(Home,{ cities:data.cities, general:data.general, onOpen:setActive, onAddCity:addCity, onExport:doExport, onImportClick:doImportClick })
+    h(Home,{ cities:data.cities, general:data.general, onOpen:setActive, onAddCity:addCity })
   );
 }
 

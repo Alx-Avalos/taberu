@@ -19,14 +19,10 @@
   /* ---------- shared shell ---------- */
   .topbar { display:flex; align-items:center; justify-content:space-between; height:56px; padding:0 32px; border-bottom:1px solid var(--border); position:sticky; top:0; background:rgba(255,255,255,0.85); backdrop-filter:blur(8px); z-index:30; }
   .brand { display:flex; align-items:center; gap:10px; cursor:pointer; border:none; background:none; font-family:var(--sans); }
-  .brand-jp { font-family:var(--jp); font-size:20px; font-weight:700; color:var(--accent); line-height:1; }
-  .brand-name { font-size:15px; font-weight:700; color:var(--ink); letter-spacing:-0.2px; }
+  .brand-logo { height:22px; width:auto; display:block; }
   .topbar-back { font-size:13px; font-weight:600; color:var(--ink3); background:none; border:none; cursor:pointer; font-family:var(--sans); padding:8px 10px; border-radius:var(--radius); transition:all var(--transition); }
   .topbar-back:hover { color:var(--ink); background:var(--gray-50); }
   .topbar-right { display:flex; align-items:center; gap:14px; }
-  .topbar-io { font-size:12px; font-weight:600; color:var(--ink3); background:none; border:1px solid var(--border); cursor:pointer; font-family:var(--sans); padding:7px 12px; border-radius:var(--radius); transition:all var(--transition); }
-  .topbar-io:hover { color:var(--accent); border-color:var(--accent); }
-  .topbar-io input[type=file] { display:none; }
   .topbar-saved { font-size:12px; font-weight:600; color:var(--green-700); opacity:0; transition:opacity 0.25s; }
   .topbar-saved.show { opacity:1; }
   .topbar-delete { font-size:12px; font-weight:600; color:var(--gray-400); background:none; border:none; cursor:pointer; font-family:var(--sans); padding:8px 10px; border-radius:var(--radius); transition:color var(--transition); }
