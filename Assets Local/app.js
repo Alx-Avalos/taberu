@@ -364,61 +364,90 @@ function CityPage({ node, cats, stays, onBack, onHome, onOpenItem, onUpdateItem,
   );
 }
 
-function AddCityForm({ onSave, onCancel }) {
-  const [f, setF] = useState({ name:"", kana:"", dates:"" });
-  const set = (k)=>(e)=>setF({ ...f, [k]:e.target.value });
-  return h("div", { className:"dcard dcard-new", style:{ display:"block", padding:"18px", cursor:"default" } },
-    h("div", { className:"form", style:{ border:"none", padding:0 } },
-      h("input", { placeholder:"Destination name, e.g. Kyoto", value:f.name, onChange:set("name") }),
-      h("input", { placeholder:"Japanese name (optional)", value:f.kana, onChange:set("kana") }),
-      h("input", { placeholder:"Dates, e.g. Nov 21–25", value:f.dates, onChange:set("dates") }),
-      h("div", { className:"form-row" },
-        h("button", { className:"btn-ghost", onClick:onCancel }, "Cancel"),
-        h("button", { className:"btn-primary", onClick:()=>{ if(!f.name.trim()) return; onSave({ id:genId(), name:f.name.trim(), kana:f.kana.trim()||f.name.trim(), dates:f.dates.trim()||"Dates TBC", blurb:"", items:[] }); } }, "Create")
-      )
-    )
-  );
+// Homepage "Pick your adventure" groups. Each buckets a few of the CATS
+// tag ids under one umbrella, with a cover photo for the picker.
+const CATEGORY_GROUPS = {
+  shopping:    { label:"Shopping",    cats:["craft"],           img:"img/cat-shopping.jpg" },
+  food:        { label:"Food",        cats:["food","coffee"],   img:"img/cat-food.jpg" },
+  experiences: { label:"Experiences", cats:["offbeat","daytrip"], img:"img/cat-experiences.jpg" },
+};
+
+function itemsForGroup(cities, groupKey) {
+  const keys = groupKey === "all" ? Object.keys(CATEGORY_GROUPS) : [groupKey];
+  const cats = keys.reduce((a,k)=>a.concat(CATEGORY_GROUPS[k].cats), []);
+  const out = [];
+  cities.forEach(c => c.items.forEach(it => {
+    if (cats.includes(it.cat)) out.push({ ...it, cityId:c.id, cityName:c.name });
+  }));
+  return out;
 }
 
-function DestCard({ node, count, countLabel, onOpen }) {
-  const py = node.imgPosY!=null ? node.imgPosY : 50;
-  return h("div", { className:"dcard", onClick:onOpen },
-    node.img
-      ? h("div", { className:"dcard-cover", style:{ backgroundImage:'url("'+node.img+'")', backgroundPosition:"center "+py+"%" } })
-      : h("div", { className:"dcard-cover-fallback", style:{ background:CITY_FALLBACK } }, h("div",{className:"dcard-kana"},node.kana)),
-    h("div", { className:"dcard-body" },
-      h("div", { className:"dcard-name" }, node.name),
-      h("div", { className:"dcard-dates" }, node.dates),
-      h("div", { className:"dcard-desc" }, node.blurb || "No description yet."),
-      h("div", { className:"dcard-count" }, count+" "+countLabel+" →")
-    )
-  );
+function getFeatured(cities) {
+  return Object.keys(CATEGORY_GROUPS)
+    .map(key => itemsForGroup(cities, key)[0])
+    .filter(Boolean);
 }
 
-function Home({ cities, general, onOpen, onAddCity }) {
-  const [adding, setAdding] = useState(false);
-  const totalPicks = cities.reduce((n,c)=>n+c.items.length,0);
+function Home({ data, onOpen }) {
+  const cities = data.cities;
+  const cats = data.categories || CATS;
+  const left = cities.slice(0,2), right = cities.slice(2,4);
   return h("div", null,
-    h("div", { className:"topbar" },
-      h("div", { className:"brand" }, h("img",{ className:"brand-logo", src:"taberu.svg", alt:"Taberu" }))
-    ),
-    h("div", { className:"home" },
-      h("div", { className:"home-hero" },
-        h("div", { className:"home-eyebrow" }, "日本 2026"),
-        h("div", { className:"home-title" }, "Field guide"),
-        h("div", { className:"home-sub" }, "A solo trip from Paris, 16 November to 5 December. Curated picks per city plus a practical layer, all editable and yours to shape."),
-        h("div", { className:"home-meta" },
-          h("div", null, h("div",{className:"home-stat-num"},"19"), h("div",{className:"home-stat-label"},"days")),
-          h("div", null, h("div",{className:"home-stat-num"},cities.length), h("div",{className:"home-stat-label"},"destinations")),
-          h("div", null, h("div",{className:"home-stat-num"},totalPicks), h("div",{className:"home-stat-label"},"picks"))
+    h("div", { className:"hero-frame" },
+      h("div", { className:"hero", style:{ backgroundImage:'url("img/hero-tokyo.jpg")' } },
+        h("div", { className:"hero-nav" },
+          h("div", { className:"hero-nav-side" }, left.map(c=>h("button",{key:c.id,className:"hero-nav-link",onClick:()=>onOpen(c.id)}, c.name.toUpperCase()))),
+          h("img", { className:"hero-logo", src:"taberu.svg", alt:"Taberu" }),
+          h("div", { className:"hero-nav-side" }, right.map(c=>h("button",{key:c.id,className:"hero-nav-link",onClick:()=>onOpen(c.id)}, c.name.toUpperCase())))
         )
-      ),
-      h("div", { className:"grid" },
-        cities.map(c=>h(DestCard,{ key:c.id, node:c, count:c.items.length, countLabel:"picks", onOpen:()=>onOpen(c.id) })),
-        h(DestCard,{ key:"general", node:general, count:general.items.length, countLabel:"notes", onOpen:()=>onOpen("general") }),
-        !adding ? h("div",{key:"new",className:"dcard dcard-new",onClick:()=>setAdding(true)},"+ New destination")
-          : h(AddCityForm,{ key:"newform", onCancel:()=>setAdding(false), onSave:(city)=>{ onAddCity(city); setAdding(false); } })
       )
+    ),
+    h("div", { className:"adventure" },
+      h("div", { className:"adventure-title" }, "Pick your adventure"),
+      h("div", { className:"adventure-grid" },
+        Object.keys(CATEGORY_GROUPS).map(key => h("div", { key, className:"adventure-item", onClick:()=>onOpen("cat:"+key) },
+          h("div", { className:"adventure-oval", style:{ backgroundImage:'url("'+CATEGORY_GROUPS[key].img+'")' } }),
+          h("div", { className:"adventure-label" }, CATEGORY_GROUPS[key].label.toUpperCase())
+        ))
+      ),
+      h("button", { className:"btn-pill", onClick:()=>onOpen("cat:all") }, "View all categories", h("span",{className:"btn-pill-arrow"},"→"))
+    ),
+    h("div", { className:"featured-section" },
+      h("div", { className:"featured-head" },
+        h("div", { className:"featured-title" }, "Featured"),
+        h("button", { className:"btn-pill", onClick:()=>onOpen("cat:all") }, "View all categories", h("span",{className:"btn-pill-arrow"},"→"))
+      ),
+      h("div", { className:"featured-grid" },
+        getFeatured(cities).map((item,i) => h(PlaceCard, { key:i, item, cats, onOpen:()=>{ onOpen(item.cityId); } }))
+      )
+    )
+  );
+}
+
+function CategoryPage({ groupKey, data, onHome, onOpenCityItem }) {
+  const cats = data.categories || CATS;
+  const isAll = groupKey === "all";
+  const title = isAll ? "All picks" : CATEGORY_GROUPS[groupKey].label;
+  const items = itemsForGroup(data.cities, groupKey);
+  const byCity = {};
+  items.forEach(it => { (byCity[it.cityId] = byCity[it.cityId] || { name:it.cityName, items:[] }).items.push(it); });
+  return h("div", { className:"city" },
+    h("div", { className:"topbar" },
+      h("button", { className:"brand", onClick:onHome }, h("img",{ className:"brand-logo", src:"taberu.svg", alt:"Taberu" })),
+      h("div", { className:"topbar-right" },
+        h("button", { className:"topbar-back", onClick:onHome }, "← Home")
+      )
+    ),
+    h("div", { className:"city-body" },
+      h("div", { className:"city-head" }, h("h1", { className:"city-name" }, title)),
+      Object.keys(byCity).length === 0
+        ? h("p", { className:"city-blurb" }, "Nothing tagged here yet.")
+        : Object.values(byCity).map(group => h("div", { key:group.name, className:"cat-city-group" },
+            h("h2", { className:"cat-city-heading" }, group.name),
+            h("div", { className:"places" },
+              group.items.map((item,i) => h(PlaceCard, { key:item.id||i, item, cats, onOpen:()=>onOpenCityItem(item.cityId, item.id) }))
+            )
+          ))
     )
   );
 }
@@ -434,26 +463,29 @@ function App() {
   const [itemId, setItemId] = useState(null);
   useEffect(()=>{ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }catch(e){} }, [data]);
 
+  const isCategory = typeof active==="string" && active.indexOf("cat:")===0;
   const isGeneral = active==="general";
-  const node = data.cities.find(c=>c.id===active) || (isGeneral ? data.general : null);
+  const node = isCategory ? null : (data.cities.find(c=>c.id===active) || (isGeneral ? data.general : null));
   const item = (node && itemId) ? node.items.find(i=>i.id===itemId) : null;
 
   function updateItem(it, field, val){ setData(p=>{ const n=JSON.parse(JSON.stringify(p)); const t=isGeneral?n.general:n.cities.find(c=>c.id===active); const idx=t.items.findIndex(x=>x.id===it.id); if(idx>-1) t.items[idx]={...t.items[idx],[field]:val}; return n; }); }
   function deleteItem(it){ setData(p=>{ const n=JSON.parse(JSON.stringify(p)); const t=isGeneral?n.general:n.cities.find(c=>c.id===active); t.items=t.items.filter(x=>x.id!==it.id); return n; }); if(itemId===it.id) setItemId(null); }
   function addItem(ni){ ni.id=genId(); setData(p=>{ const n=JSON.parse(JSON.stringify(p)); const t=isGeneral?n.general:n.cities.find(c=>c.id===active); t.items.push(ni); return n; }); }
   function updateNode(field,val){ setData(p=>{ const n=JSON.parse(JSON.stringify(p)); if(isGeneral){ n.general[field]=val; return n; } const t=n.cities.find(c=>c.id===active); if(t) t[field]=val; return n; }); }
-  function addCity(city){ setData(p=>{ const n=JSON.parse(JSON.stringify(p)); n.cities.push(city); return n; }); }
   function updateCats(cats){ setData(p=>{ const n=JSON.parse(JSON.stringify(p)); n.categories = cats; return n; }); }
 
   const activeCats = isGeneral ? data.general.cats : (data.categories || CATS);
   const catLabel = item ? (function(){ const c = activeCats.find(x=>x.id===item.cat); return c ? c.label : item.cat; })() : null;
 
+  if (isCategory) return h("div",{className:"app"},
+    h(CategoryPage,{ groupKey:active.slice(4), data, onHome:()=>setActive("home"), onOpenCityItem:(cityId,id)=>{ setActive(cityId); setItemId(id); } })
+  );
   if (node) return h("div",{className:"app"},
     h(CityPage,{ node, cats:activeCats, stays:STAYS[node.id], onBack:()=>setActive("home"), onHome:()=>setActive("home"), onOpenItem:setItemId, onUpdateItem:updateItem, onDeleteItem:deleteItem, onAddItem:addItem, onUpdateNode:updateNode, onUpdateCats:updateCats }),
     item ? h(ItemModal,{ item, catLabel, onUpdate:(f,v)=>updateItem(item,f,v), onClose:()=>setItemId(null), onDelete:()=>deleteItem(item) }) : null
   );
   return h("div",{className:"app"},
-    h(Home,{ cities:data.cities, general:data.general, onOpen:setActive, onAddCity:addCity })
+    h(Home,{ data, onOpen:setActive })
   );
 }
 

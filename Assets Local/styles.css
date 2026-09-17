@@ -28,29 +28,47 @@
   .topbar-delete { font-size:12px; font-weight:600; color:var(--gray-400); background:none; border:none; cursor:pointer; font-family:var(--sans); padding:8px 10px; border-radius:var(--radius); transition:color var(--transition); }
   .topbar-delete:hover { color:var(--red-500); }
 
-  /* ---------- home ---------- */
-  .home { max-width:1200px; margin:0 auto; padding:56px 32px 96px; }
-  .home-hero { margin-bottom:48px; }
-  .home-eyebrow { font-family:var(--jp); font-size:14px; color:var(--accent); letter-spacing:3px; margin-bottom:14px; }
-  .home-title { font-size:44px; font-weight:700; letter-spacing:-1px; line-height:1.08; margin-bottom:14px; }
-  .home-sub { font-size:17px; color:var(--ink3); line-height:1.5; max-width:56ch; }
-  .home-meta { display:flex; gap:28px; margin-top:24px; }
-  .home-stat-num { font-size:22px; font-weight:700; color:var(--ink); }
-  .home-stat-label { font-size:12px; color:var(--ink3); margin-top:2px; }
+  /* ---------- home: hero ---------- */
+  .hero-frame { max-width:1440px; margin:0 auto; padding:24px; }
+  .hero { height:520px; border-radius:24px; background-size:cover; background-position:center; position:relative; overflow:hidden; }
+  .hero-nav { position:absolute; top:38px; left:0; right:0; display:flex; align-items:center; justify-content:space-between; padding:0 60px; }
+  .hero-nav-side { display:flex; align-items:center; gap:40px; flex:1; }
+  .hero-nav-side:last-child { justify-content:flex-end; }
+  .hero-nav-link { background:none; border:none; cursor:pointer; font-family:var(--sans); font-size:12px; font-weight:700; letter-spacing:0.08em; color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.35); }
+  .hero-nav-link:hover { opacity:0.8; }
+  .hero-logo { height:32px; width:auto; filter:brightness(0) invert(1); flex:0 0 auto; margin:0 24px; }
 
-  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:22px; }
-  .dcard { border-radius:16px; border:1px solid var(--border); overflow:hidden; cursor:pointer; background:var(--surface); display:flex; flex-direction:column; transition:box-shadow var(--transition), transform var(--transition); }
-  .dcard:hover { box-shadow:0 8px 24px rgba(16,24,40,0.08); transform:translateY(-2px); }
-  .dcard-cover { height:150px; background-size:cover; background-position:center; position:relative; }
-  .dcard-cover-fallback { height:150px; display:flex; align-items:flex-end; padding:16px; }
-  .dcard-cover-fallback .dcard-kana { font-family:var(--jp); font-size:48px; font-weight:700; color:#fff; line-height:0.9; opacity:0.92; }
-  .dcard-body { padding:18px 20px 20px; display:flex; flex-direction:column; flex:1; }
-  .dcard-name { font-size:19px; font-weight:700; letter-spacing:-0.3px; }
-  .dcard-dates { font-size:12px; color:var(--ink3); margin-top:3px; }
-  .dcard-desc { font-size:13.5px; color:var(--ink2); line-height:1.55; margin-top:12px; flex:1; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
-  .dcard-count { font-size:12px; font-weight:600; color:var(--accent); margin-top:16px; }
-  .dcard-new { border:1.5px dashed var(--border); align-items:center; justify-content:center; min-height:210px; color:var(--ink3); font-size:14px; font-weight:600; box-shadow:none; }
-  .dcard-new:hover { border-color:var(--accent); color:var(--accent); background:var(--brand-25); transform:none; box-shadow:none; }
+  /* ---------- home: pick your adventure ---------- */
+  .adventure { max-width:1040px; margin:0 auto; padding:72px 32px 48px; text-align:center; }
+  .adventure-title { font-size:32px; font-weight:700; letter-spacing:-0.5px; margin-bottom:44px; }
+  .adventure-grid { display:flex; justify-content:center; gap:48px; flex-wrap:wrap; margin-bottom:40px; }
+  .adventure-item { cursor:pointer; width:280px; }
+  .adventure-oval { height:380px; border-radius:50%; background-size:cover; background-position:center; box-shadow:var(--card-shadow); transition:transform var(--transition); }
+  .adventure-item:hover .adventure-oval { transform:translateY(-4px); }
+  .adventure-label { margin-top:20px; font-size:13px; font-weight:700; letter-spacing:0.12em; color:var(--ink); }
+  .btn-pill { display:inline-flex; align-items:center; gap:12px; background:var(--gray-900); color:#fff; border:none; border-radius:28px; padding:16px 8px 16px 22px; font-size:13px; font-weight:600; font-family:var(--sans); cursor:pointer; }
+  .btn-pill:hover { background:#000; }
+  .btn-pill-arrow { width:36px; height:36px; border-radius:50%; background:#fff; color:var(--gray-900); font-size:15px; display:flex; align-items:center; justify-content:center; }
+
+  /* ---------- home: featured ---------- */
+  .featured-section { background:var(--gray-50); padding:56px 0 88px; }
+  .featured-head { max-width:1040px; margin:0 auto 32px; padding:0 32px; display:flex; align-items:center; justify-content:space-between; }
+  .featured-title { font-size:32px; font-weight:700; letter-spacing:-0.5px; }
+  .featured-grid { max-width:1040px; margin:0 auto; padding:0 32px; display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:24px; }
+
+  /* ---------- category pages ---------- */
+  .cat-city-group { margin-bottom:36px; }
+  .cat-city-heading { font-size:18px; font-weight:700; letter-spacing:-0.2px; margin-bottom:16px; }
+
+  @media (max-width:760px){
+    .hero { height:420px; border-radius:16px; }
+    .hero-nav { padding:0 20px; }
+    .hero-nav-side { gap:16px; }
+    .hero-nav-link { font-size:10px; }
+    .adventure-oval { height:280px; }
+    .adventure-item { width:220px; }
+    .adventure-grid { gap:24px; }
+  }
 
   /* ---------- city page ---------- */
   .city { }
@@ -142,8 +160,6 @@
 
   @media (max-width:860px){
     .topbar { padding:0 18px; }
-    .home { padding:36px 18px 64px; }
-    .home-title { font-size:32px; }
     .city-body { padding:0 18px 64px; }
     .detail-body { grid-template-columns:1fr; gap:28px; padding:24px 18px 64px; }
     .rail { position:static; }
