@@ -1,2 +1,7 @@
 .DS_Store
 **/.DS_Store
+.env
+.env.local
+.vercel-home/
+Naka-Meguro.jpg
+shoham-avisrur-f2RXvdbP0DU-unsplash (1).jpg
